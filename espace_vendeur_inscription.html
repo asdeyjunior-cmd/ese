@@ -1,0 +1,1194 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="espace_vendeur.css">
+    <title>Inscription Vendeur</title>
+    <script src="loader.js"></script>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <style>
+        .etapes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0;
+            margin-bottom: 30px;
+            max-width: 100%;
+        }
+
+        .etape {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #bbb;
+            white-space: nowrap;
+        }
+
+        .etape .num {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #ddd;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .etape.actif .num {
+            background: #8b2d00;
+            color: white;
+        }
+
+        .etape.actif {
+            color: #8b2d00;
+        }
+
+        .etape.fait .num {
+            background: #007a2f;
+            color: white;
+        }
+
+        .etape.fait {
+            color: #007a2f;
+        }
+
+        .separateur-etape {
+            width: 40px;
+            height: 2px;
+            flex-shrink: 1;
+            min-width: 12px;
+            background: #ddd;
+            margin: 0 4px;
+            align-self: center;
+        }
+
+        .separateur-etape.fait {
+            background: #007a2f;
+        }
+
+        .rangee-boutons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .rangee-boutons button {
+            flex: 1 1 140px;
+            min-width: 0;
+            white-space: normal;
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        @media (max-width: 480px) {
+            .etapes {
+                gap: 0;
+                margin-bottom: 22px;
+            }
+
+            .etape {
+                font-size: 11px;
+                gap: 5px;
+            }
+
+            .etape .num {
+                width: 22px;
+                height: 22px;
+                font-size: 11px;
+            }
+
+            .separateur-etape {
+                width: 16px;
+                margin: 0 2px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .etape span {
+                display: none;
+            }
+
+            .separateur-etape {
+                width: 20px;
+            }
+        }
+
+        .bloc-etape {
+            display: none;
+        }
+
+        .bloc-etape.actif {
+            display: block;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        main {
+            padding: 0;
+        }
+
+        .auth-section {
+            max-width: none;
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        @media (max-width: 900px) {
+            .auth-section {
+                min-height: auto;
+            }
+        }
+
+        .retour-arriere {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 100;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .retour-arriere:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+
+<body>
+
+<a href="espace_vendeur.html"
+   class="retour-arriere"
+   onclick="if (window.history.length > 1) { history.back(); return false; }"
+   aria-label="Retour">←</a>
+
+<main>
+
+    <div class="auth-section">
+
+        <div class="auth-visuel">
+            <div class="auth-visuel-contenu">
+
+                <div class="auth-logo-badge">
+                    <img src="logo.webp" alt="ESETEC Marketplace">
+                </div>
+
+                <h1 class="auth-titre-marque">
+                    ESETEC<br>
+                    <span>Marketplace</span>
+                </h1>
+
+                <p class="auth-slogan">
+                    « Rejoignez la communauté ESETEC. »
+                </p>
+
+                <p class="auth-desc">
+                    En tant qu'étudiant, achetez, vendez et échangez facilement vos
+                    articles avec les autres étudiants de l'école.
+                </p>
+
+                <div class="auth-badges">
+                    <span class="auth-badge">Étudiants</span>
+                    <span class="auth-badge">Vos articles</span>
+                    <span class="auth-badge">Contact WhatsApp</span>
+                </div>
+
+            </div>
+        </div>
+
+        <section id="inscription" class="auth-carte">
+
+            <span class="auth-icone-badge">✦</span>
+
+            <h2>S'inscrire</h2>
+
+            <p class="auth-souscription">
+                Créez votre compte ESETEC Marketplace pour commencer à vendre.
+            </p>
+
+            <div class="auth-separateur">
+                <span>✦</span>
+            </div>
+
+            <!-- INDICATEUR D'ÉTAPES -->
+
+            <div class="etapes">
+
+                <div class="etape actif" id="ind_etape1">
+                    <div class="num">1</div>
+                    <span>Informations</span>
+                </div>
+
+                <div class="separateur-etape" id="sep1"></div>
+
+                <div class="etape" id="ind_etape2">
+                    <div class="num">2</div>
+                    <span>Paiement</span>
+                </div>
+
+                <div class="separateur-etape" id="sep2"></div>
+
+                <div class="etape" id="ind_etape3">
+                    <div class="num">3</div>
+                    <span>Confirmation</span>
+                </div>
+
+            </div>
+
+            <!-- ========================= -->
+            <!-- ÉTAPE 1 -->
+            <!-- ========================= -->
+
+            <div class="bloc-etape actif" id="etape1">
+
+                <p id="msg_inscription_err"
+                   style="display:none;
+                          background:#ffe0e0;
+                          color:#cc0000;
+                          padding:12px 16px;
+                          border-radius:8px;
+                          margin-bottom:15px;
+                          font-weight:bold;
+                          border-left:4px solid #cc0000;">
+                </p>
+
+                <form id="form_inscription">
+
+                    <label>Nom complet *</label>
+
+                    <input type="text"
+                           id="reg_nom"
+                           placeholder="Ex: Konan Armand"
+                           autocomplete="name">
+
+                    <label>Email *</label>
+
+                    <input type="email"
+                           id="reg_email"
+                           placeholder="nom@exemple.com"
+                           autocomplete="email"
+                           required>
+
+                    <label>Numéro WhatsApp *</label>
+
+                    <input type="tel"
+                           id="reg_whatsapp"
+                           placeholder="+225 07 XX XX XX XX"
+                           autocomplete="tel">
+
+                    <label>Mot de passe *</label>
+
+                    <input type="password"
+                           id="reg_mdp"
+                           placeholder="Minimum 6 caractères"
+                           autocomplete="new-password">
+
+                    <label>Confirmer le mot de passe *</label>
+
+                    <input type="password"
+                           id="reg_mdp2"
+                           placeholder="Répétez le mot de passe"
+                           autocomplete="new-password">
+
+                    <button type="button"
+                            id="btn_etape1"
+                            onclick="validerEtape1()">
+                        Suivant → Paiement
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- ========================= -->
+            <!-- ÉTAPE 2 -->
+            <!-- ========================= -->
+
+            <div class="bloc-etape" id="etape2">
+
+                <p style="background:#fff8e1;
+                          color:#8b6000;
+                          padding:14px 16px;
+                          border-radius:8px;
+                          margin-bottom:20px;
+                          border-left:4px solid #f9a825;
+                          font-size:14px;
+                          line-height:1.6;">
+
+                    <strong>Durée :</strong> 30 jours —
+
+                    <strong>Montant :</strong>
+
+                    <span style="text-decoration:line-through; opacity:0.6;">
+                        2 500 FCFA
+                    </span>
+
+                    <span style="font-weight:bold; color:#cc0000;">
+                        1 500 FCFA
+                    </span>
+
+                    <span style="background:#cc0000;
+                                 color:white;
+                                 font-size:11px;
+                                 font-weight:bold;
+                                 padding:2px 8px;
+                                 border-radius:10px;
+                                 margin-left:6px;">
+                        -40%
+                    </span>
+
+                    <br>
+
+                    Effectuez le paiement puis passez à l'étape suivante.
+
+                </p>
+
+                <h3 style="margin-bottom:12px;">
+                    Payer via Wave
+                </h3>
+
+                <a href="https://pay.wave.com/m/M_ci_mUsAktmv33Ro/c/ci/"
+                   target="_blank"
+                   rel="noopener noreferrer">
+
+                    <button type="button"
+                            style="background:#1a73e8;
+                                   color:white;
+                                   border:none;
+                                   padding:14px 25px;
+                                   border-radius:8px;
+                                   font-size:15px;
+                                   font-weight:bold;
+                                   cursor:pointer;
+                                   width:100%;
+                                   margin-bottom:20px;">
+
+                        Payer 1 500 FCFA avec Wave
+
+                        <span style="opacity:0.85;">
+                            (au lieu de 2 500)
+                        </span>
+
+                    </button>
+
+                </a>
+
+                <div class="rangee-boutons">
+
+                    <button type="button"
+                            onclick="allerEtape(1)"
+                            style="background:#eee;
+                                   color:#444;
+                                   border:none;
+                                   padding:12px;
+                                   border-radius:8px;
+                                   font-size:14px;
+                                   cursor:pointer;">
+
+                        ← Retour
+
+                    </button>
+
+                    <button type="button"
+                            onclick="allerEtape(3)"
+                            style="background:#8b2d00;
+                                   color:white;
+                                   border:none;
+                                   padding:12px;
+                                   border-radius:8px;
+                                   font-size:15px;
+                                   font-weight:bold;
+                                   cursor:pointer;">
+
+                        J'ai payé → Continuer
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- ========================= -->
+            <!-- ÉTAPE 3 -->
+            <!-- ========================= -->
+
+            <div class="bloc-etape" id="etape3">
+
+                <p style="background:#e0ffe8;
+                          color:#007a2f;
+                          padding:14px 16px;
+                          border-radius:8px;
+                          margin-bottom:20px;
+                          border-left:4px solid #007a2f;
+                          font-size:14px;
+                          line-height:1.6;">
+
+                    <strong>Paiement effectué ?</strong><br>
+                    Cliquez simplement sur le bouton ci-dessous.
+                    Aucune capture d'écran n'est nécessaire.
+                    L'administrateur vérifiera directement le paiement sur Wave.
+
+                </p>
+
+                <div id="msg_preuve_err"
+                     style="display:none;
+                            background:#ffe0e0;
+                            color:#cc0000;
+                            padding:12px 16px;
+                            border-radius:8px;
+                            margin-top:15px;
+                            font-weight:bold;
+                            border-left:4px solid #cc0000;">
+                </div>
+
+                <div class="rangee-boutons"
+                     style="margin-top:15px;">
+
+                    <button type="button"
+                            onclick="allerEtape(2)"
+                            style="background:#eee;
+                                   color:#444;
+                                   border:none;
+                                   padding:12px;
+                                   border-radius:8px;
+                                   font-size:14px;
+                                   cursor:pointer;">
+
+                        ← Retour
+
+                    </button>
+
+                    <button type="button"
+                            id="btn_envoyer_preuve"
+                            onclick="envoyerPreuve()"
+                            style="background:#25D366;
+                                   color:white;
+                                   border:none;
+                                   padding:12px;
+                                   border-radius:8px;
+                                   font-size:15px;
+                                   font-weight:bold;
+                                   cursor:pointer;">
+
+                        J'ai payé → Envoyer ma demande
+
+                    </button>
+
+                </div>
+
+                <div id="msg_inscription_ok"
+                     style="display:none;
+                            background:#e0ffe8;
+                            color:#007a2f;
+                            padding:14px 16px;
+                            border-radius:8px;
+                            margin-top:20px;
+                            font-weight:bold;
+                            border-left:4px solid #007a2f;
+                            text-align:center;
+                            line-height:1.8;">
+
+                    Demande envoyée !<br>
+                    L'administrateur va vérifier votre paiement.<br>
+                    Vous recevrez l'accès sous 24h maximum.
+
+                </div>
+
+            </div>
+
+            <p class="auth-lien-bas">
+
+                Vous avez déjà un compte ?
+
+                <a href="espace_vendeur.html">
+                    Se connecter
+                </a>
+
+            </p>
+
+        </section>
+
+    </div>
+
+</main>
+
+<script type="module">
+
+    // =========================================================
+    // FIREBASE
+    // =========================================================
+
+    import { initializeApp }
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+    import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        get
+    }
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+
+    // =========================================================
+    // CONFIGURATION FIREBASE
+    // =========================================================
+
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyD0AD4E1t_YuQLHOgsEOy_wKQZ4l9ycrMo",
+
+        authDomain: "esetec-marketplace.firebaseapp.com",
+
+        projectId: "esetec-marketplace",
+
+        storageBucket: "esetec-marketplace.firebasestorage.app",
+
+        messagingSenderId: "480104714016",
+
+        appId: "1:480104714016:web:c8b923f80c103701385145",
+
+        databaseURL:
+            "https://esetec-marketplace-default-rtdb.firebaseio.com"
+
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+
+    const db = getDatabase(app);
+
+
+    // =========================================================
+    // DONNÉES TEMPORAIRES
+    // =========================================================
+
+    let donneesInscription = {};
+
+    // Code de parrainage reçu dans le lien (?ref=XXXXXXXX) : gardé jusqu'à l'envoi de l'inscription
+    (function () {
+        try {
+            const code = (new URLSearchParams(window.location.search).get("ref") || "")
+                .trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+            if (code) { sessionStorage.setItem("esetec_ref", code); }
+        } catch (e) {}
+    })();
+
+
+    // =========================================================
+    // RECHERCHER UN VENDEUR PAR EMAIL
+    // =========================================================
+
+    async function trouverVendeurParEmail(email) {
+
+        const cible = (email || "")
+            .trim()
+            .toLowerCase();
+
+        const snap = await get(
+            ref(db, "vendeurs")
+        );
+
+        let resultat = null;
+
+        if (snap.exists()) {
+
+            snap.forEach(function (e) {
+
+                const v = e.val();
+
+                if (
+                    (v.email || "")
+                        .trim()
+                        .toLowerCase() === cible
+                ) {
+
+                    resultat = {
+                        id: e.key,
+                        data: v
+                    };
+
+                }
+
+            });
+
+        }
+
+        return resultat;
+
+    }
+
+
+    // =========================================================
+    // NAVIGATION ENTRE LES ÉTAPES
+    // =========================================================
+
+    window.allerEtape = function (num) {
+
+        [1, 2, 3].forEach(function (n) {
+
+            const bloc =
+                document.getElementById("etape" + n);
+
+            if (bloc) {
+
+                bloc.classList.toggle(
+                    "actif",
+                    n === num
+                );
+
+            }
+
+            const ind =
+                document.getElementById("ind_etape" + n);
+
+            if (ind) {
+
+                ind.classList.remove(
+                    "actif",
+                    "fait"
+                );
+
+                if (n < num) {
+
+                    ind.classList.add("fait");
+
+                }
+
+                if (n === num) {
+
+                    ind.classList.add("actif");
+
+                }
+
+            }
+
+        });
+
+
+        const sep1 =
+            document.getElementById("sep1");
+
+        const sep2 =
+            document.getElementById("sep2");
+
+
+        if (sep1) {
+
+            sep1.classList.toggle(
+                "fait",
+                num > 1
+            );
+
+        }
+
+
+        if (sep2) {
+
+            sep2.classList.toggle(
+                "fait",
+                num > 2
+            );
+
+        }
+
+    };
+
+
+    // =========================================================
+    // ÉTAPE 1 — VALIDATION
+    // =========================================================
+
+    window.validerEtape1 = async function () {
+
+        const nom =
+            document
+                .getElementById("reg_nom")
+                .value
+                .trim();
+
+        const email =
+            document
+                .getElementById("reg_email")
+                .value
+                .trim()
+                .toLowerCase();
+
+        const whatsapp =
+            document
+                .getElementById("reg_whatsapp")
+                .value
+                .trim();
+
+        const mdp =
+            document
+                .getElementById("reg_mdp")
+                .value;
+
+        const mdp2 =
+            document
+                .getElementById("reg_mdp2")
+                .value;
+
+
+        const errEl =
+            document.getElementById(
+                "msg_inscription_err"
+            );
+
+
+        errEl.style.display = "none";
+
+
+        // Vérification des champs
+
+        if (
+            !nom ||
+            !email ||
+            !whatsapp ||
+            !mdp ||
+            !mdp2
+        ) {
+
+            errEl.textContent =
+                "Veuillez remplir tous les champs.";
+
+            errEl.style.display = "block";
+
+            return;
+
+        }
+
+
+        // Vérification email
+
+        if (
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        ) {
+
+            errEl.textContent =
+                "Veuillez entrer une adresse e-mail valide.";
+
+            errEl.style.display = "block";
+
+            return;
+
+        }
+
+
+        // Mot de passe
+
+        if (mdp.length < 6) {
+
+            errEl.textContent =
+                "Le mot de passe doit contenir au moins 6 caractères.";
+
+            errEl.style.display = "block";
+
+            return;
+
+        }
+
+
+        // Confirmation
+
+        if (mdp !== mdp2) {
+
+            errEl.textContent =
+                "Les mots de passe ne correspondent pas.";
+
+            errEl.style.display = "block";
+
+            return;
+
+        }
+
+
+        const btn =
+            document.getElementById(
+                "btn_etape1"
+            );
+
+
+        btn.textContent =
+            "Vérification...";
+
+        btn.disabled = true;
+
+
+        try {
+
+            const existant =
+                await trouverVendeurParEmail(
+                    email
+                );
+
+
+            if (existant) {
+
+                errEl.textContent =
+                    "Cet email est déjà utilisé.";
+
+                errEl.style.display =
+                    "block";
+
+                btn.textContent =
+                    "Suivant → Paiement";
+
+                btn.disabled = false;
+
+                return;
+
+            }
+
+
+            // Sauvegarde temporaire
+
+            donneesInscription = {
+
+                nom: nom,
+
+                email: email,
+
+                whatsapp: whatsapp,
+
+                mdp: mdp
+
+            };
+
+
+            // Passage à l'étape 2
+
+            window.allerEtape(2);
+
+
+        } catch (err) {
+
+            console.error(
+                "Erreur vérification email :",
+                err
+            );
+
+            errEl.textContent =
+                "Erreur technique lors de la vérification. Vérifiez votre connexion puis réessayez.";
+
+            errEl.style.display = "block";
+
+        }
+
+
+        btn.textContent =
+            "Suivant → Paiement";
+
+        btn.disabled = false;
+
+    };
+
+
+    // =========================================================
+    // ÉTAPE 3 — ENVOI DE LA DEMANDE
+    // =========================================================
+
+    window.envoyerPreuve = async function () {
+
+        const errEl =
+            document.getElementById(
+                "msg_preuve_err"
+            );
+
+        const bouton =
+            document.getElementById(
+                "btn_envoyer_preuve"
+            );
+
+        const messageOk =
+            document.getElementById(
+                "msg_inscription_ok"
+            );
+
+
+        errEl.style.display = "none";
+
+
+        // Vérification des données d'inscription
+
+        if (
+            !donneesInscription.nom ||
+            !donneesInscription.email ||
+            !donneesInscription.whatsapp ||
+            !donneesInscription.mdp
+        ) {
+
+            errEl.textContent =
+                "Les informations d'inscription ont été perdues. Veuillez recommencer l'inscription.";
+
+            errEl.style.display = "block";
+
+            return;
+
+        }
+
+
+        bouton.disabled = true;
+
+        bouton.textContent =
+            "Enregistrement...";
+
+
+        try {
+
+            // =================================================
+            // 1. CRÉATION DE LA DEMANDE
+            // =================================================
+
+            const vendeurRef =
+                push(
+                    ref(db, "vendeurs")
+                );
+
+
+            const vendeurId =
+                vendeurRef.key;
+
+
+            if (!vendeurId) {
+
+                throw new Error(
+                    "Impossible de créer l'identifiant vendeur."
+                );
+
+            }
+
+
+            // =================================================
+            // 2. ENREGISTREMENT DANS REALTIME DATABASE
+            // =================================================
+
+            // Parrainage : retrouver le vendeur qui a partagé le lien
+            let parrainId = null;
+            let parrainCode = null;
+            try {
+                const codeRef = (sessionStorage.getItem("esetec_ref") || "").trim();
+                if (codeRef) {
+                    const idParrain = (await get(ref(db, "parrainages/" + codeRef))).val();
+                    if (idParrain) {
+                        const emailParrain = ((await get(ref(db, "vendeurs/" + idParrain + "/email"))).val() || "")
+                            .trim().toLowerCase();
+                        // On ignore le cas où quelqu'un s'inscrit avec son propre lien
+                        if (emailParrain !== (donneesInscription.email || "").trim().toLowerCase()) {
+                            parrainId = idParrain;
+                            parrainCode = codeRef;
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
+
+            await set(
+
+                vendeurRef,
+
+                {
+
+                    parrainId: parrainId,
+
+                    parrainCode: parrainCode,
+
+                    parrainageCredite: false,
+
+                    nom:
+                        donneesInscription.nom,
+
+                    email:
+                        donneesInscription.email,
+
+                    whatsapp:
+                        donneesInscription.whatsapp,
+
+                    mdp:
+                        donneesInscription.mdp,
+
+                    statut:
+                        "en_attente",
+
+                    date:
+                        new Date().toISOString(),
+
+                    dateActivation:
+                        null,
+
+                    dateExpiration:
+                        null,
+
+                    montantPaiement:
+                        1500,
+
+                    moyenPaiement:
+                        "Wave",
+
+                    preuvePaiementUrl:
+                        null,
+
+                    preuvePaiementPath:
+                        null,
+
+                    preuvePaiementNom:
+                        null,
+
+                    datePaiement:
+                        new Date().toISOString(),
+
+                    paiementAConfirmer:
+                        true
+
+                }
+
+            );
+
+
+            // =================================================
+            // 3. MESSAGE WHATSAPP
+            // =================================================
+
+            const message =
+
+                "Bonjour, je viens de m'inscrire sur ESETEC Marketplace et j'ai effectué mon paiement Wave.\n\n" +
+
+                "Nom complet : " +
+                donneesInscription.nom +
+
+                "\nEmail : " +
+                donneesInscription.email +
+
+                "\nWhatsApp : " +
+                donneesInscription.whatsapp +
+
+                "\n\nMontant payé : 1 500 FCFA" +
+
+                "\n\nJe n'ai pas envoyé de capture de paiement. Merci de vérifier directement mon paiement sur Wave et de confirmer ma demande.";
+
+
+            const lienWhatsApp =
+
+                "https://api.whatsapp.com/send?phone=2250768221911&text=" +
+
+                encodeURIComponent(message);
+
+
+            // =================================================
+            // 4. OUVERTURE WHATSAPP
+            // =================================================
+
+            window.open(
+                lienWhatsApp,
+                "_blank",
+                "noopener,noreferrer"
+            );
+
+
+            // =================================================
+            // 5. MESSAGE DE CONFIRMATION
+            // =================================================
+
+            messageOk.style.display =
+                "block";
+
+
+            bouton.textContent =
+                "Demande envoyée";
+
+
+            // =================================================
+            // 6. REDIRECTION
+            // =================================================
+
+            setTimeout(function () {
+
+                window.location.href =
+                    "demande-en-attente.html";
+
+            }, 1200);
+
+
+        } catch (err) {
+
+            console.error(
+                "Erreur inscription :",
+                err
+            );
+
+
+            let messageErreur =
+                "Une erreur est survenue lors de l'enregistrement.";
+
+
+            if (
+                err &&
+                err.code === "PERMISSION_DENIED"
+            ) {
+
+                messageErreur =
+                    "Firebase refuse l'enregistrement de la demande. Vérifiez les règles Realtime Database.";
+
+            }
+
+
+            errEl.textContent =
+                messageErreur;
+
+
+            errEl.style.display =
+                "block";
+
+
+            bouton.disabled =
+                false;
+
+
+            bouton.textContent =
+                "J'ai payé → Envoyer ma demande";
+
+        }
+
+    };
+
+</script>
+
+    <script type="module" src="visites.js" data-role="marchand"></script>
+</body>
+</html>

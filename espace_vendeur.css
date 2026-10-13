@@ -1,0 +1,1135 @@
+
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html{
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f4f6;
+    color: #222;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+img{
+    max-width: 100%;
+    height: auto;
+}
+
+
+/* =========================================================
+   IMAGE D'ENTETE
+========================================================= */
+
+.header-image{
+    width: 100%;
+    height: 500px;
+
+    background-image: url("entete2.webp");
+    background-size: cover;
+    background-position: center;
+
+    border-top: 5px solid #ff5e00;
+    border-bottom: 5px solid #ff5e00;
+
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+header{
+    width: 100%;
+
+    background: linear-gradient(
+        135deg,
+        #8b2d00,
+        #d94f0b,
+        #e86d2c
+    );
+
+    padding: 28px 20px;
+
+    text-align: center;
+
+    border-bottom: 4px solid #ffb300;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+header h1{
+    color: #ffffff;
+
+    font-size: 35px;
+
+    font-weight: 800;
+
+    margin-bottom: 15px;
+
+    text-shadow:
+        2px 2px 4px rgba(0,0,0,0.35);
+}
+
+
+/* =========================================================
+   BARRE DE NAVIGATION
+========================================================= */
+
+.menu{
+    width: 100%;
+
+    list-style: none;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 4px;
+
+    padding: 7px 10px;
+
+    background: #111111;
+
+    border-bottom: 4px solid #ff5e00;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,0.35);
+
+    position: relative;
+
+    z-index: 10;
+}
+
+.menu li{
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.menu li a{
+    position: relative;
+
+    display: block;
+
+    padding: 14px 23px;
+
+    color: #ffc832;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+
+    text-align: center;
+
+    border-radius: 7px;
+
+    transition:
+        background 0.3s ease,
+        color 0.3s ease,
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+
+/* Petite ligne décorative */
+
+.menu li a::after{
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: 5px;
+
+    width: 0;
+    height: 2px;
+
+    background: #ff5e00;
+
+    transform: translateX(-50%);
+
+    transition: width 0.3s ease;
+}
+
+
+/* Effet au survol */
+
+.menu li a:hover{
+    background: linear-gradient(
+        135deg,
+        #ffc832,
+        #d49f17
+    );
+
+    color: #000000;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 12px rgba(255,94,0,0.35);
+}
+
+.menu li a:hover::after{
+    width: 60%;
+}
+
+
+/* =========================================================
+   PRESENTATION VENDEUR
+========================================================= */
+
+.presentation-vendeur{
+    width: 90%;
+
+    max-width: 1000px;
+
+    margin: 45px auto;
+
+    padding: 40px;
+
+    background: #ffffff;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+    border-top: 5px solid #ff5e00;
+
+    box-shadow:
+        0 6px 20px rgba(0,0,0,0.10);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.presentation-vendeur:hover{
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.15);
+}
+
+.presentation-vendeur h2{
+    color: #8b2d00;
+
+    font-size: 32px;
+
+    margin-bottom: 20px;
+
+    font-weight: 800;
+}
+
+.presentation-vendeur p{
+    color: #555;
+
+    font-size: 18px;
+
+    line-height: 1.8;
+}
+
+
+/* =========================================================
+   BLOCS DES FORMULAIRES
+========================================================= */
+
+#connexion,
+#inscription,
+#ajouter_article,
+#paiement{
+
+    width: 90%;
+
+    max-width: 1000px;
+
+    margin: 40px auto;
+
+    padding: 35px;
+
+    background: #ffffff;
+
+    border-radius: 15px;
+
+    border-left: 5px solid #ff5e00;
+
+    box-shadow:
+        0 6px 20px rgba(0,0,0,0.10);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+#connexion:hover,
+#inscription:hover,
+#ajouter_article:hover,
+#paiement:hover{
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.15);
+}
+
+
+/* =========================================================
+   TITRES DES FORMULAIRES
+========================================================= */
+
+#connexion h2,
+#inscription h2,
+#ajouter_article h2,
+#paiement h2{
+
+    color: #8b2d00;
+
+    font-size: 28px;
+
+    margin-bottom: 25px;
+
+    text-align: center;
+
+    font-weight: 800;
+}
+
+#connexion h2::after,
+#inscription h2::after,
+#ajouter_article h2::after,
+#paiement h2::after{
+
+    content: "";
+
+    display: block;
+
+    width: 65px;
+
+    height: 3px;
+
+    margin: 10px auto 0;
+
+    background: #ff5e00;
+
+    border-radius: 10px;
+}
+
+
+/* =========================================================
+   FORMULAIRES
+========================================================= */
+
+form{
+    display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+}
+
+form label{
+    margin-top: 15px;
+
+    margin-bottom: 8px;
+
+    color: #5a1f00;
+
+    font-weight: 700;
+
+    font-size: 15px;
+}
+
+form input,
+form textarea{
+
+    width: 100%;
+
+    padding: 14px 15px;
+
+    border: 1px solid #d2d2d2;
+
+    border-radius: 8px;
+
+    background: #fafafa;
+
+    color: #222;
+
+    font-size: 16px;
+
+    font-family: inherit;
+
+    transition:
+        border 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+}
+
+form input:focus,
+form textarea:focus{
+
+    outline: none;
+
+    border-color: #ff5e00;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 3px rgba(255,94,0,0.12);
+}
+
+form textarea{
+    min-height: 120px;
+
+    resize: vertical;
+}
+
+
+/* =========================================================
+   BOUTONS
+========================================================= */
+
+form button,
+#paiement button{
+
+    margin-top: 25px;
+
+    padding: 15px 20px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: linear-gradient(
+        135deg,
+        #8b2d00,
+        #c94b0b
+    );
+
+    color: #ffffff;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,0.15);
+
+    transition:
+        background 0.3s ease,
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+form button:hover,
+#paiement button:hover{
+
+    background: linear-gradient(
+        135deg,
+        #ff5e00,
+        #d94300
+    );
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 15px rgba(255,94,0,0.30);
+}
+
+form button:active,
+#paiement button:active{
+
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   PAIEMENT
+========================================================= */
+
+#paiement h3{
+
+    margin-top: 25px;
+
+    margin-bottom: 8px;
+
+    padding-left: 12px;
+
+    color: #5a1f00;
+
+    border-left: 4px solid #ff5e00;
+
+    font-size: 20px;
+}
+
+#paiement p{
+
+    margin-top: 10px;
+
+    color: #555;
+
+    line-height: 1.7;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer{
+
+    width: 100%;
+
+    margin-top: 60px;
+
+    padding: 30px 20px 0;
+
+    background: #111111;
+
+    color: #ffffff;
+
+    border-top: 5px solid #ff5e00;
+
+    box-shadow:
+        0 -4px 15px rgba(0,0,0,0.20);
+}
+
+.footer-conteneu{
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 10px 20px 20px;
+    text-align: left;
+}
+
+.footer-marque h3{
+    color: #ffc832;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.footer-marque h3 span{
+    color: #fff;
+}
+
+.footer-marque p{
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.footer-colonne h4{
+    color: #fff;
+    font-size: 15px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer-colonne ul{
+    list-style: none;
+}
+
+.footer-colonne li{
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+}
+
+.footer-colonne a{
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    transition: color 0.25s ease;
+}
+
+.footer-colonne a:hover{
+    color: #ffc832;
+}
+
+.footer-bas{
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.footer-bas p{
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+}
+
+@media(max-width:768px){
+    .footer-conteneu{
+        grid-template-columns: 1fr 1fr;
+        text-align: center;
+    }
+
+    .footer-marque{
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+}
+
+@media(max-width:480px){
+    .footer-conteneu{
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   AUTHENTIFICATION — CONNEXION / INSCRIPTION
+========================================================= */
+
+.auth-section{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 1100px;
+    min-height: 620px;
+    margin: 50px auto;
+    border-radius: 26px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.22);
+}
+
+/* ---- Panneau visuel (gauche) ---- */
+
+.auth-visuel{
+    position: relative;
+    background-image: url("entete2.webp");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    padding: 60px 50px;
+    color: #fff;
+}
+
+.auth-visuel::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(139,45,0,0.92), rgba(10,10,10,0.86));
+}
+
+.auth-visuel-contenu{
+    position: relative;
+    z-index: 2;
+}
+
+.auth-logo-badge{
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin-bottom: 26px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    overflow: hidden;
+}
+
+.auth-logo-badge img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.auth-titre-marque{
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.auth-titre-marque span{
+    color: #ffb347;
+}
+
+.auth-slogan{
+    font-size: 18px;
+    font-style: italic;
+    color: #ffd9b3;
+    margin-bottom: 16px;
+}
+
+.auth-desc{
+    font-size: 15px;
+    line-height: 1.75;
+    color: rgba(255,255,255,0.88);
+    max-width: 380px;
+    margin-bottom: 30px;
+}
+
+.auth-badges{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.auth-badge{
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ---- Carte formulaire (droite) ---- */
+
+.auth-carte{
+    background: #fff;
+    padding: 56px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.auth-carte:hover{
+    transform: none;
+    box-shadow: none;
+}
+
+.auth-icone-badge{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: #fff3e9;
+    color: #ff5e00;
+    font-size: 18px;
+}
+
+.auth-carte h2{
+    font-size: 27px;
+    color: #1a1a1a;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 25px;
+}
+
+.auth-souscription{
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: -15px;
+    margin-bottom: 24px;
+}
+
+.auth-separateur{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.auth-separateur::before,
+.auth-separateur::after{
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #ececec;
+}
+
+.auth-separateur span{
+    color: #ff5e00;
+    font-size: 14px;
+}
+
+.auth-carte form{
+    text-align: left;
+}
+
+.auth-carte label{
+    margin-top: 12px;
+}
+
+.auth-carte input,
+.auth-carte textarea{
+    padding: 13px 14px;
+}
+
+.auth-carte #lien_inscription,
+.auth-lien-bas{
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    margin-top: 18px;
+}
+
+.auth-lien-bas a,
+.auth-carte #lien_inscription a{
+    color: #ff5e00;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-carte #lien_inscription a:hover,
+.auth-lien-bas a:hover{
+    text-decoration: underline;
+}
+
+/* Étapes d'inscription : rapprocher du style de la carte */
+.auth-carte .etapes{
+    margin-bottom: 26px;
+}
+
+/* ---- Responsive ---- */
+
+@media(max-width:900px){
+    .auth-section{
+        grid-template-columns: 1fr;
+        min-height: 0;
+        margin: 30px auto;
+        border-radius: 20px;
+    }
+
+    .auth-visuel{
+        padding: 40px 30px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .auth-visuel-contenu{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .auth-desc{
+        max-width: 100%;
+    }
+
+    .auth-badges{
+        justify-content: center;
+    }
+
+    .auth-carte{
+        padding: 40px 28px;
+    }
+}
+
+@media(max-width:480px){
+    .auth-section{
+        width: 94%;
+        margin: 24px auto;
+        border-radius: 16px;
+    }
+
+    .auth-visuel{
+        padding: 32px 20px;
+    }
+
+    .auth-logo-badge{
+        width: 68px;
+        height: 68px;
+        margin-bottom: 18px;
+    }
+
+    .auth-titre-marque{
+        font-size: 26px;
+    }
+
+    .auth-slogan{
+        font-size: 15px;
+    }
+
+    .auth-desc{
+        font-size: 14px;
+    }
+
+    .auth-carte{
+        padding: 32px 18px;
+    }
+
+    .auth-carte h2{
+        font-size: 22px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - ÉCRANS MOYENS
+========================================================= */
+
+@media (max-width:1200px){
+
+    .menu li a{
+        padding: 13px 17px;
+
+        font-size: 13px;
+
+        letter-spacing: 0.8px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLETTES
+========================================================= */
+
+@media (max-width:900px){
+
+    .menu{
+
+        display: grid;
+
+        grid-template-columns:
+        repeat(3, 1fr);
+
+        gap: 2px;
+
+        padding: 5px;
+    }
+
+    .menu li{
+        width: 100%;
+    }
+
+    .menu li a{
+
+        width: 100%;
+
+        min-height: 48px;
+
+        padding: 12px 8px;
+
+        font-size: 12px;
+
+        display: flex;
+
+        justify-content: center;
+
+        align-items: center;
+
+        white-space: normal;
+    }
+
+    .header-image{
+        height: 400px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - PETITES TABLETTES
+========================================================= */
+
+@media (max-width:768px){
+
+    .menu{
+
+        grid-template-columns:
+        repeat(2, 1fr);
+    }
+
+    .menu li a{
+
+        min-height: 46px;
+
+        padding: 12px 8px;
+
+        font-size: 12px;
+    }
+
+    header{
+        padding: 22px 15px;
+    }
+
+    header h1{
+        font-size: 28px;
+    }
+
+    .presentation-vendeur,
+    #connexion,
+    #inscription,
+    #ajouter_article,
+    #paiement{
+
+        width: 95%;
+
+        padding: 25px;
+    }
+
+    .presentation-vendeur h2{
+        font-size: 26px;
+    }
+
+    .presentation-vendeur p{
+        font-size: 16px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - TELEPHONES
+========================================================= */
+
+@media (max-width:480px){
+
+    .header-image{
+        height: 300px;
+    }
+
+    header{
+        padding: 18px 10px;
+    }
+
+    header h1{
+        font-size: 23px;
+
+        line-height: 1.3;
+    }
+
+    .menu{
+
+        grid-template-columns: 1fr;
+
+        padding: 5px;
+    }
+
+    .menu li a{
+
+        min-height: 44px;
+
+        padding: 11px 8px;
+
+        font-size: 12px;
+
+        letter-spacing: 0.6px;
+    }
+
+    .presentation-vendeur,
+    #connexion,
+    #inscription,
+    #ajouter_article,
+    #paiement{
+
+        width: 94%;
+
+        padding: 20px 15px;
+
+        margin: 30px auto;
+
+        border-radius: 12px;
+    }
+
+    .presentation-vendeur h2{
+        font-size: 23px;
+    }
+
+    .presentation-vendeur p{
+        font-size: 15px;
+    }
+
+    #connexion h2,
+    #inscription h2,
+    #ajouter_article h2,
+    #paiement h2{
+
+        font-size: 23px;
+    }
+
+    form input,
+    form textarea{
+
+        font-size: 15px;
+
+        padding: 13px;
+    }
+
+    form button,
+    #paiement button{
+
+        font-size: 15px;
+
+        padding: 14px;
+    }
+
+    footer{
+        padding: 25px 15px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - TRÈS PETITS TELEPHONES
+========================================================= */
+
+@media (max-width:360px){
+
+    .header-image{
+        height: 250px;
+    }
+
+    header h1{
+        font-size: 20px;
+    }
+
+    .menu li a{
+
+        min-height: 42px;
+
+        padding: 10px 7px;
+
+        font-size: 11px;
+
+        letter-spacing: 0.4px;
+    }
+
+    .presentation-vendeur,
+    #connexion,
+    #inscription,
+    #ajouter_article,
+    #paiement{
+
+        width: 95%;
+
+        padding: 18px 12px;
+    }
+
+    .presentation-vendeur h2{
+        font-size: 21px;
+    }
+
+    .presentation-vendeur p{
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title> Accueil</title>
+    <script src="loader.js"></script>
+    <script src="glisser.js"></script>
+    <link rel="preload" as="image" href="slide1.webp" fetchpriority="high">
+    <link rel="icon" type="image/png" href="logo.png">
+</head>
+
+<body>
+    <header>
+        <h1>ESETEC ONLINE MARKET</h1>
+    </header>
+    
+
+
+<!-- HERO SLIDER -->
+    <section class="hero-slider" id="hero-slider" aria-roledescription="carrousel" aria-label="Présentation d’ESETEC Marketplace">
+
+        <div class="slides">
+
+            <!-- SLIDE 1 -->
+            <article class="slide slide-1 is-active" aria-roledescription="diapositive" aria-label="1 sur 3">
+                <div class="slide-contenu">
+                    <h2 class="slide-titre">
+                        Bienvenue sur <span class="titre-accent">ESETEC Online Market</span>
+                    </h2>
+
+                    <p class="slide-texte">
+                        ESETEC Online Market est une plateforme numérique conçue pour faciliter
+                        l’exposition, l’achat et la vente de produits entre étudiants.
+                    </p>
+
+                    <span class="slide-trait" aria-hidden="true"></span>
+
+                    <div class="hero-boutons">
+                        <a href="espace_client.html" class="btn-principal">Voir les articles</a>
+                        <a href="espace_vendeur.html" class="btn-secondaire">Devenir vendeur</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- SLIDE 2 -->
+            <article class="slide slide-2" data-bg-image="slide2.webp" aria-roledescription="diapositive" aria-label="2 sur 3" aria-hidden="true">
+                <div class="slide-contenu">
+                    <h2 class="slide-titre">
+                        ESETEC <span class="titre-accent">Online Market</span>
+                    </h2>
+
+                    <p class="slide-texte">
+                        Ce site a été créé dans le but de promouvoir l’entrepreneuriat,
+                        encourager les échanges au sein de l’école et offrir un espace moderne,
+                        simple et rapide pour publier ou rechercher des articles.
+                    </p>
+
+                    <span class="slide-trait" aria-hidden="true"></span>
+
+                    <div class="hero-boutons">
+                        <a href="espace_client.html" class="btn-principal">Voir les articles</a>
+                        <a href="espace_vendeur.html" class="btn-secondaire">Devenir vendeur</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- SLIDE 3 -->
+            <article class="slide slide-3" data-bg-image="slide3.webp" aria-roledescription="diapositive" aria-label="3 sur 3" aria-hidden="true">
+                <div class="slide-contenu">
+                    <h2 class="slide-titre">
+                        Une communauté <span class="titre-accent">connectée</span>
+                    </h2>
+
+                    <p class="slide-texte">
+                        Que vous soyez vendeur ou acheteur, la plateforme vous permet de trouver
+                        facilement des vêtements, accessoires, matériels informatiques,
+                        fournitures scolaires et plusieurs autres produits utiles au quotidien.
+                    </p>
+
+                    <span class="slide-trait" aria-hidden="true"></span>
+
+                    <p class="slide-texte slide-texte-secondaire">
+                        ESETEC Marketplace transforme l’école en une véritable communauté
+                        connectée où chacun peut exposer ses produits, développer son activité
+                        et découvrir de nouvelles opportunités.
+                    </p>
+
+                    <div class="hero-boutons">
+                        <a href="espace_client.html" class="btn-principal">Voir les articles</a>
+                        <a href="espace_vendeur.html" class="btn-secondaire">Devenir vendeur</a>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <section class="categories-populaires">
+        <h2>Tout ce dont les étudiants ont besoin,
+       proposé directement par les étudiants</h2>
+        <p class="sous-titre"></p>
+
+        <div class="categories-grille">
+            
+            
+            <div class="categorie-carte">
+                <span class="icone"><img src="C04-288s.webp" alt="" width="100%" height="100%" loading="lazy" decoding="async"></span>
+                <h3>Des vêtements de qualité</h3>
+            </div>
+            <div class="categorie-carte">
+                <span class="icone"><img src="casque-audio.webp" alt="" width="100%" height="100%" loading="lazy" decoding="async"></span>
+                <h3>Des produits de qualité à petit prix </h3>
+            </div>
+            <div class="categorie-carte">
+                <span class="icone"><img src="produit-durable.webp" alt="" width="100%" height="100%" loading="lazy" decoding="async"></span>
+                <h3>Des produits durables</h3>
+            </div>
+            <div class="categorie-carte">
+                <span class="icone"><img src="livraison.webp" alt="" width="100%" height="100%" loading="lazy" decoding="async"></span>
+                <h3>une livraison garantie</h3>
+            </div>
+        </div>
+    </section>
+
+   
+
+    <section class="categories-populaires">
+        <h2>Que voulez-vous ?</h2>
+        <p class="sous-titre">Parcourez les articles par catégorie</p>
+
+        <div class="categories-grille">
+            <a class="categorie-carte" href="espace_client.html?categorie=Vêtements">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1679212622264-646085f5653f?auto=format&fit=crop&w=520&q=75" alt="Vêtements" loading="lazy" decoding="async"></span>
+                <h3>Vêtements</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Accessoires">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1567473031050-4248185c685d?auto=format&fit=crop&w=520&q=75" alt="Accessoires" loading="lazy" decoding="async"></span>
+                <h3>Accessoires</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Informatique">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1709721835709-a7440f7f99e6?auto=format&fit=crop&w=520&q=75" alt="Informatique" loading="lazy" decoding="async"></span>
+                <h3>Informatique</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Fournitures">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1661205490694-4f4c65d8e9f2?auto=format&fit=crop&w=520&q=75" alt="Fournitures scolaires" loading="lazy" decoding="async"></span>
+                <h3>Fournitures scolaires</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Alimentation">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1635774855717-0aec182f92cc?auto=format&fit=crop&w=520&q=75" alt="Alimentation" loading="lazy" decoding="async"></span>
+                <h3>Alimentation</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Plat du jour">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=520&q=75" alt="Plat du jour" loading="lazy" decoding="async"></span>
+                <h3>Plat du jour</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Électronique">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1678851836066-dc27614cc56b?auto=format&fit=crop&w=520&q=75" alt="Électronique" loading="lazy" decoding="async"></span>
+                <h3>Électronique</h3>
+            </a>
+            <a class="categorie-carte" href="espace_client.html?categorie=Autre">
+                <span class="icone"><img src="https://images.unsplash.com/photo-1629580484403-0ca253fcce3d?auto=format&fit=crop&w=520&q=75" alt="Autre" loading="lazy" decoding="async"></span>
+                <h3>Autre</h3>
+            </a>
+        </div>
+    </section>
+
+   <!-- FOOTER -->
+    <footer class="footer-site">
+        <div class="footer-bas">
+            <p>© <span id="annee-courante"></span> ESETEC Marketplace </p>
+             <p style="margin-top:6px;"><a href="admin.html" style="color:rgba(255,255,255,0.6);font-size:13px;text-decoration:none;">.</a></p>
+        </div>
+        </div>
+
+        <script>
+            document.getElementById("annee-courante").textContent = new Date().getFullYear();
+        </script>
+    </footer>
+
+    <!-- SCRIPT DU HERO SLIDER -->
+    <script>
+        (function () {
+
+            var DELAI_ENTRE_SLIDES = 6000;
+
+            var slider = document.getElementById("hero-slider");
+            if (!slider) { return; }
+
+            var slides = slider.querySelectorAll(".slide");
+
+            var courant = 0;
+            var minuteur = null;
+
+            /* Charge l'image de fond d'une diapositive seulement la première fois
+               qu'on en a besoin (pas toutes en même temps au chargement du site) */
+            function chargerImageSlide(slide) {
+                var image = slide.getAttribute("data-bg-image");
+                if (image) {
+                    slide.style.setProperty("--slide-bg", "url('" + image + "')");
+                    slide.classList.add("slide-image-chargee");
+                    slide.removeAttribute("data-bg-image");
+                }
+            }
+
+            /* Affiche la slide numéro i */
+            function afficher(i) {
+                courant = (i + slides.length) % slides.length;
+
+                chargerImageSlide(slides[courant]);
+                // Pré-charge la prochaine diapositive un peu à l'avance pour une transition fluide,
+                // sans pour autant tout télécharger dès l'arrivée sur le site.
+                chargerImageSlide(slides[(courant + 1) % slides.length]);
+
+                for (var n = 0; n < slides.length; n++) {
+                    var actif = (n === courant);
+                    slides[n].classList.toggle("is-active", actif);
+                    slides[n].setAttribute("aria-hidden", actif ? "false" : "true");
+                }
+            }
+
+            /* Défilement automatique : ne s'arrête jamais définitivement */
+            function arreter() {
+                clearTimeout(minuteur);
+                minuteur = null;
+            }
+
+            function planifier() {
+                arreter();
+                if (document.hidden) { return; }
+
+                minuteur = setTimeout(function () {
+                    afficher(courant + 1);
+                    planifier();
+                }, DELAI_ENTRE_SLIDES);
+            }
+
+            /* Navigation manuelle : on change de slide puis le compte à rebours repart de zéro */
+            function allerA(i) {
+                afficher(i);
+                planifier();
+            }
+
+            /* Flèches du clavier */
+            slider.addEventListener("keydown", function (e) {
+                if (e.key === "ArrowLeft") { allerA(courant - 1); }
+                if (e.key === "ArrowRight") { allerA(courant + 1); }
+            });
+
+            /* Glisser (doigt, souris ou trackpad) pour changer de diapositive : remplace les boutons */
+            EsetecSwipe(slider, {
+                onPrev: function () { afficher(courant - 1); },
+                onNext: function () { afficher(courant + 1); },
+                onStart: arreter,
+                onEnd: planifier
+            });
+
+            /* Pas de défilement quand l'onglet est en arrière-plan */
+            document.addEventListener("visibilitychange", function () {
+                if (document.hidden) { arreter(); } else { planifier(); }
+            });
+
+            /* Démarrage */
+            afficher(0);
+            planifier();
+
+        })();
+    </script>
+</body>
+
+</html>

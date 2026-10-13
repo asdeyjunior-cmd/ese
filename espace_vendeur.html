@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="espace_vendeur.css">
+    <title>Espace Vendeur</title>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js">
+    <script>
+        /* Session déjà ouverte : on masque tout de suite le formulaire de connexion
+           (sinon il reste visible pendant que la page vérifie le compte). */
+        try { if (localStorage.getItem("esetec_vendeur_id")) { document.documentElement.classList.add("session-vendeur"); } } catch (e) {}
+    </script>
+    <style>
+        .session-vendeur .auth-connexion { display: none !important; }
+        .session-vendeur #dashboard_vendeur { display: block !important; }
+        .session-vendeur #dashboard_vendeur.dash-attente > * { visibility: hidden; }
+        .session-vendeur #dashboard_vendeur.dash-attente::before {
+            content: "⏳ Reconnexion…"; display: block; text-align: center; padding: 60px 20px; color: #888; font-size: 16px;
+        }
+    </style>
+    <script src="loader.js"></script>
+    <script src="lazy-images.js" defer></script>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        /* ÉTAPES INSCRIPTION */
+        .etapes {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 30px;
+        }
+        .etape {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #bbb;
+        }
+        .etape .num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #ddd;
+            color: #999;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold;
+        }
+        .etape.actif .num { background: #8b2d00; color: white; }
+        .etape.actif { color: #8b2d00; }
+        .etape.fait .num { background: #007a2f; color: white; }
+        .etape.fait { color: #007a2f; }
+        .separateur-etape {
+            width: 40px; height: 2px;
+            background: #ddd; margin: 0 4px; align-self: center;
+        }
+        .separateur-etape.fait { background: #007a2f; }
+
+        /* BLOC ÉTAPE */
+        .bloc-etape { display: none; }
+        .bloc-etape.actif { display: block; }
+
+        /* PAGE PLEIN ÉCRAN : pas de header/footer, le conteneur prend toute la page */
+        html, body { height: 100%; margin: 0; }
+        main { padding: 0; }
+        .auth-section {
+            max-width: none;
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        @media (max-width: 900px) {
+            .auth-section { min-height: auto; }
+        }
+
+        /* FLÈCHE RETOUR (en haut à gauche) */
+        .retour-arriere {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 100;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .retour-arriere:hover { background: rgba(0,0,0,0.8); }
+
+                /* ═══════════════════════════════════════
+           ESPACE VENDEUR (après connexion)
+        ═══════════════════════════════════════ */
+        :root {
+            --ink:#1d1a17; --mute:#6f675f; --line:#e6e0d9; --brand:#ff5e00; --deep:#8b2d00; --gold:#ffc832;
+            --ok:#0a7a35; --okbg:#e3f6ea; --bad:#c62828; --badbg:#fde8e8; --warn:#8a5a00; --warnbg:#fff4d6; --side:#14110f;
+        }
+        #dashboard_vendeur { display:none; max-width:1180px; margin:0 auto; padding:76px 20px 60px; color:var(--ink); }
+        #dashboard_vendeur .dash-grille { display:grid; grid-template-columns:290px minmax(0,1fr); gap:24px; align-items:start; }
+        #dashboard_vendeur .dash-contenu { min-width:0; }
+
+        /* Colonne gauche */
+        #dashboard_vendeur .dash-lateral {
+            position:sticky; top:20px; display:flex; flex-direction:column; gap:16px;
+            background:var(--side); color:#fff; border-radius:18px; padding:20px 16px; border-top:4px solid var(--brand);
+        }
+        .dash-marque { display:flex; align-items:center; gap:10px; font-weight:700; font-size:15px; color:var(--gold); }
+        .dash-marque img { width:34px; height:34px; border-radius:50%; background:#fff; object-fit:cover; }
+        .profil-entete { display:flex; align-items:center; gap:14px; padding:16px 0; border-top:1px solid rgba(255,255,255,.12); border-bottom:1px solid rgba(255,255,255,.12); }
+        .profil-photo-zone { position:relative; width:60px; height:60px; flex-shrink:0; }
+        .profil-photo-cercle {
+            width:60px; height:60px; border-radius:50%; border:2px solid var(--brand); background-color:var(--deep);
+            background-size:cover; background-position:center; color:#fff; display:flex; align-items:center; justify-content:center;
+            font-size:24px; font-weight:700;
+        }
+        .profil-photo-btn {
+            position:absolute; bottom:-3px; right:-3px; width:24px; height:24px; border-radius:50%; background:var(--brand);
+            display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; border:2px solid var(--side);
+        }
+        .profil-infos { min-width:0; }
+        .profil-infos h2 { margin:0 0 2px; font-size:17px; color:#fff; word-break:break-word; }
+        .profil-infos p { margin:0; font-size:12.5px; color:rgba(255,255,255,.6); word-break:break-all; }
+
+        #compteur_abonnement { background:rgba(255,255,255,.07); border-radius:12px; padding:14px; text-align:left; margin:0; }
+        #compteur_abonnement .label { font-size:12.5px; color:rgba(255,255,255,.65); margin-bottom:4px; }
+        #compteur_abonnement .temps { font-size:16px; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; }
+        #compteur_abonnement .barre-fond { height:5px; background:rgba(255,255,255,.15); border-radius:5px; margin-top:10px; overflow:hidden; }
+        #compteur_abonnement .barre-remplie { height:100%; background:var(--brand); border-radius:5px; transition:width 1s; }
+        #compteur_abonnement.expire { background:rgba(198,40,40,.28); }
+        #compteur_abonnement.expire .barre-remplie { background:#ff7b7b; }
+
+        .dash-onglets { display:flex; flex-direction:column; gap:4px; }
+        .dash-onglet {
+            width:100%; text-align:left; background:transparent; border:0; border-left:3px solid transparent;
+            color:rgba(255,255,255,.72); padding:12px 14px; border-radius:10px; font:600 14.5px inherit; font-family:inherit; cursor:pointer;
+        }
+        .dash-onglet:hover { background:rgba(255,255,255,.07); color:#fff; }
+        .dash-onglet.actif { background:rgba(255,94,0,.18); color:#fff; border-left-color:var(--brand); }
+        .btn-deconnexion {
+            background:transparent; border:1px solid rgba(255,255,255,.25); color:#fff; padding:10px; border-radius:10px;
+            font:600 14px inherit; font-family:inherit; cursor:pointer;
+        }
+        .btn-deconnexion:hover { background:rgba(255,255,255,.1); }
+
+        /* Panneaux */
+        .dash-panneau { display:none; }
+        .dash-panneau.actif { display:block; }
+        #dashboard_vendeur #ajouter_article {
+            width:auto; max-width:none; margin:0; padding:0; background:none; border:0; border-radius:0; box-shadow:none;
+        }
+        #dashboard_vendeur #ajouter_article:hover { transform:none; box-shadow:none; }
+        #dashboard_vendeur .panneau-tete { margin-bottom:18px; }
+        #dashboard_vendeur .panneau-tete h2 { font-size:24px; color:var(--ink); text-align:left; margin:0 0 4px; font-weight:800; }
+        #dashboard_vendeur .panneau-tete h2::after { display:none; }
+        .panneau-tete p { color:var(--mute); font-size:14.5px; }
+
+        .stats-ligne { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+        .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+        .stat b { display:block; font-size:26px; line-height:1.1; }
+        .stat span { font-size:13px; color:var(--mute); }
+        .stat.dispo b { color:var(--ok); }
+        .stat.rupture b { color:var(--bad); }
+
+        /* Liste des articles */
+        .grille-mes-articles, .grille-promo-articles { display:flex; flex-direction:column; gap:12px; }
+        .aucun-mes-articles { text-align:center; color:var(--mute); padding:40px 20px; background:#fff; border:1px dashed #d6d0c9; border-radius:14px; line-height:1.8; }
+        .btn-vide { margin-top:8px; background:var(--brand); color:#fff; border:0; padding:11px 20px; border-radius:10px; font:700 14px inherit; font-family:inherit; cursor:pointer; }
+        .mini-carte-article {
+            display:grid; grid-template-columns:96px minmax(0,1fr) auto; gap:8px 16px; align-items:start;
+            background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+        }
+        .mini-carte-article > img, .mini-carte-article > .no-photo, .carte-promo-article > img, .carte-promo-article > .no-photo {
+            width:96px; height:96px; object-fit:cover; border-radius:10px; background:#eee;
+            display:flex; align-items:center; justify-content:center; font-size:28px;
+        }
+        .mini-carte-article .nom { font-size:16px; font-weight:700; line-height:1.3; }
+        .mini-carte-article .prix { font-size:16px; font-weight:800; color:var(--deep); margin-top:2px; }
+        .mini-carte-article .date { font-size:12.5px; color:var(--mute); margin-top:2px; }
+        .variantes-mini { font-size:13px; color:var(--mute); margin-top:8px; line-height:1.6; }
+        .miniatures-photos { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+        .miniature-photo { position:relative; width:46px; height:46px; border-radius:8px; overflow:hidden; background:#eee; }
+        .miniature-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+        .miniature-photo button {
+            position:absolute; top:2px; right:2px; width:20px; height:20px; padding:0; border:0; border-radius:50%;
+            background:rgba(0,0,0,.65); color:#fff; font-size:10px; line-height:1; cursor:pointer;
+        }
+        .miniature-photo button:hover { background:var(--bad); }
+        .mini-carte-article .actions { display:flex; flex-direction:column; align-items:stretch; gap:8px; min-width:170px; }
+        .badge-stock { display:block; text-align:center; font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:20px; }
+        .badge-stock.disponible { background:var(--okbg); color:var(--ok); }
+        .badge-stock.rupture { background:var(--badbg); color:var(--bad); }
+        .btn-stock, .btn-supprimer-article {
+            width:100%; padding:9px 10px; border-radius:9px; font:600 13px inherit; font-family:inherit; cursor:pointer;
+            background:#fff; border:1px solid var(--line); color:var(--ink);
+        }
+        .btn-stock:hover { background:#f4f1ed; }
+        .btn-supprimer-article { color:var(--bad); border-color:transparent; }
+        .btn-supprimer-article:hover { background:var(--badbg); }
+
+        /* Publicité */
+        .encart-pub-info {
+            display:flex; gap:18px; align-items:center; background:#fff; border:1px solid var(--line);
+            border-left:4px solid var(--gold); border-radius:14px; padding:16px 18px; margin-bottom:18px;
+        }
+        .prix-pub { flex-shrink:0; text-align:center; padding-right:18px; border-right:1px solid var(--line); }
+        .prix-pub strong { display:block; font-size:22px; color:var(--deep); }
+        .prix-pub span { font-size:12.5px; color:var(--mute); }
+        .encart-pub-info p { font-size:14px; color:var(--mute); line-height:1.6; }
+        .carte-promo-article { display:grid; grid-template-columns:72px minmax(0,1fr); gap:14px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
+        .carte-promo-article > img, .carte-promo-article > .no-photo { width:72px; height:72px; }
+        .carte-promo-article .info { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+        .carte-promo-article .nom { flex:1; min-width:140px; font-size:15px; font-weight:700; }
+        .badge-promo { display:inline-block; font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:20px; }
+        .badge-promo.attente { background:var(--warnbg); color:var(--warn); }
+        .badge-promo.active { background:var(--okbg); color:var(--ok); }
+        .badge-promo.refusee { background:var(--badbg); color:var(--bad); margin-right:8px; }
+        .btn-promouvoir { background:var(--deep); color:#fff; border:0; padding:10px 16px; border-radius:10px; font:700 13px inherit; font-family:inherit; cursor:pointer; }
+        .btn-promouvoir:hover { background:#6b2200; }
+
+        /* Formulaire d'ajout */
+        .form-bloc { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; }
+        .form-bloc h3 { font-size:16px; margin:0 0 4px; color:var(--ink); }
+        .form-bloc h3 small { font-weight:400; color:var(--mute); font-size:13px; }
+        .form-bloc .aide { font-size:13px; color:var(--mute); line-height:1.6; margin-bottom:14px; }
+        .champs-grille { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+        .champ { display:flex; flex-direction:column; min-width:0; }
+        .champ.large { grid-column:1/-1; }
+        #dashboard_vendeur .champ label { margin:0 0 6px; font-size:13.5px; font-weight:600; color:var(--ink); }
+        #dashboard_vendeur .champ :is(input,textarea,select) {
+            width:100%; padding:12px 13px; border:1px solid #d6d0c9; border-radius:10px; background:#fff; color:var(--ink);
+            font-family:inherit; font-size:15px;
+        }
+        #dashboard_vendeur .champ textarea { min-height:100px; }
+        #dashboard_vendeur :is(input,textarea,select):focus-visible { outline:2px solid var(--brand); outline-offset:1px; border-color:var(--brand); box-shadow:none; }
+        #dashboard_vendeur .zone-photos {
+            display:flex; flex-direction:column; align-items:center; gap:4px; margin:0; padding:26px 16px; text-align:center;
+            border:2px dashed #d6d0c9; border-radius:12px; background:#faf8f6; color:var(--mute); font-size:13.5px; font-weight:400; cursor:pointer;
+        }
+        #dashboard_vendeur .zone-photos strong { color:var(--ink); font-size:15px; }
+        #dashboard_vendeur .zone-photos:hover { border-color:var(--brand); background:#fff6ef; }
+        .zone-photos input { display:none; }
+        .ligne-ajout-variante { display:flex; gap:8px; }
+        .ligne-ajout-variante input { flex:1; min-width:0; }
+        #dashboard_vendeur .btn-ajouter-variante {
+            flex-shrink:0; margin:0; padding:0 16px; border:0; border-radius:10px; background:var(--ink); color:#fff;
+            font-size:14px; font-weight:600; cursor:pointer; box-shadow:none;
+        }
+        #dashboard_vendeur .btn-ajouter-variante:hover { background:var(--deep); transform:none; box-shadow:none; }
+        .liste-variantes { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+        .liste-variantes:empty { display:none; }
+        .puce-variante {
+            display:inline-flex; align-items:center; gap:6px; background:#fff3e6; color:var(--deep);
+            font-size:13px; font-weight:600; padding:5px 6px 5px 12px; border-radius:20px;
+        }
+        #dashboard_vendeur .puce-variante button {
+            margin:0; padding:0; width:20px; height:20px; border:0; border-radius:50%; background:rgba(139,45,0,.14);
+            color:var(--deep); font-size:10px; line-height:1; box-shadow:none; cursor:pointer;
+        }
+        #dashboard_vendeur .puce-variante button:hover { background:var(--deep); color:#fff; transform:none; box-shadow:none; }
+        #dashboard_vendeur .btn-publier {
+            width:100%; margin:0; padding:15px; border:0; border-radius:12px; background:var(--brand); color:#fff;
+            font-size:16px; font-weight:700; cursor:pointer; box-shadow:none;
+        }
+        #dashboard_vendeur .btn-publier:hover { background:var(--deep); transform:none; box-shadow:none; }
+        #dashboard_vendeur .btn-publier:disabled { opacity:.6; cursor:not-allowed; }
+        .msg { padding:12px 14px; border-radius:10px; font-weight:600; font-size:14px; margin-bottom:14px; }
+        .msg.ok { background:var(--okbg); color:var(--ok); }
+        .msg.err { background:var(--badbg); color:var(--bad); }
+
+        /* Fenêtre de demande de publicité */
+        .popup-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9999; align-items:center; justify-content:center; }
+        .popup-overlay.actif { display:flex; }
+        .popup-box { background:#fff; border-radius:16px; padding:26px; max-width:420px; width:92%; box-shadow:0 10px 40px rgba(0,0,0,.3); }
+        .popup-box h3 { color:var(--ink); margin:0 0 10px; font-size:18px; }
+        .popup-box p { color:var(--mute); font-size:14px; line-height:1.6; margin-bottom:16px; }
+        .btn-wave { display:block; text-align:center; background:#1a73e8; color:#fff; padding:14px; border-radius:10px; font-weight:700; text-decoration:none; margin-bottom:16px; }
+        .popup-boutons { display:flex; gap:10px; }
+        .popup-boutons button { padding:12px; border-radius:10px; font:700 14px inherit; font-family:inherit; border:0; cursor:pointer; }
+        .popup-boutons .btn-annuler { flex:1; background:#eee; color:var(--ink); font-weight:600; }
+        .popup-boutons .btn-confirmer { flex:2; background:var(--deep); color:#fff; }
+
+        /* Adaptation mobile / tablette */
+        @media (max-width:900px) {
+            #dashboard_vendeur { padding:70px 14px 40px; }
+            #dashboard_vendeur .dash-grille { grid-template-columns:1fr; }
+            #dashboard_vendeur .dash-lateral { position:static; padding:16px; gap:14px; }
+            .dash-onglets { order:2; flex-direction:row; }
+            #section_compteur { order:3; }
+            .btn-deconnexion { order:4; }
+            .dash-onglet { text-align:center; padding:11px 6px; font-size:13.5px; border-left:0; border-bottom:3px solid transparent; border-radius:8px; }
+            .dash-onglet.actif { border-bottom-color:var(--brand); }
+        }
+        @media (max-width:640px) {
+            .champs-grille { grid-template-columns:1fr; }
+            .stat { padding:12px; } .stat b { font-size:22px; }
+            .mini-carte-article { grid-template-columns:72px minmax(0,1fr); }
+            .mini-carte-article > img, .mini-carte-article > .no-photo { width:72px; height:72px; }
+            .mini-carte-article .actions { grid-column:1/-1; flex-direction:row; flex-wrap:wrap; min-width:0; }
+            .mini-carte-article .actions > * { flex:1 1 130px; }
+            .encart-pub-info { flex-direction:column; align-items:flex-start; }
+            .prix-pub { border-right:0; padding-right:0; text-align:left; }
+        }
+
+        /* ═════ SOLDE + PARRAINAGE ═════ */
+        .solde-barre { margin:14px 0; padding:14px 16px; border-radius:12px; color:#fff;
+            background:linear-gradient(135deg,#ff5e00,#ff8a3d); box-shadow:0 4px 12px rgba(255,94,0,.25); }
+        .solde-barre .solde-label { font-size:12px; letter-spacing:.5px; text-transform:uppercase; opacity:.9; }
+        .solde-barre .solde-montant { font-size:26px; font-weight:800; margin-top:4px; line-height:1.1; }
+        .solde-barre .solde-montant small { font-size:14px; font-weight:700; margin-left:4px; }
+        .parrain-carte { background:#fff; border:1px solid #eee; border-radius:14px; padding:20px; margin-bottom:16px; }
+        .parrain-carte h3 { margin:0 0 6px; font-size:17px; color:#1a1a1a; }
+        .parrain-carte p { margin:0 0 14px; color:#555; font-size:14px; line-height:1.6; }
+        .parrain-gain { display:inline-block; background:#fff3ea; color:#ff5e00; font-weight:800;
+            padding:4px 12px; border-radius:20px; font-size:14px; }
+        .parrain-lien-ligne { display:flex; gap:8px; flex-wrap:wrap; }
+        .parrain-lien-ligne input { flex:1 1 240px; min-width:0; padding:12px; border:1px solid #ddd; border-radius:8px;
+            font-size:14px; background:#fafafa; color:#333; }
+        .parrain-btn { padding:12px 18px; border:0; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px; }
+        .parrain-btn.copier { background:#ff5e00; color:#fff; }
+        .parrain-btn.whatsapp { background:#25d366; color:#fff; }
+        .parrain-btn:hover { opacity:.9; }
+        .parrain-stats { display:flex; gap:12px; flex-wrap:wrap; }
+        .parrain-stats .stat { flex:1 1 140px; }
+        .liste-filleuls { list-style:none; margin:10px 0 0; padding:0; }
+        .liste-filleuls li { display:flex; justify-content:space-between; gap:10px; padding:10px 0;
+            border-bottom:1px solid #f0f0f0; font-size:14px; }
+        .liste-filleuls li b { color:#007a2f; white-space:nowrap; }
+        .parrain-vide { color:#888; font-size:14px; }
+        .parrain-bandeau { background:#fff; border:1px solid #ffd9bf; border-left:5px solid #ff5e00; border-radius:12px;
+            padding:14px 16px; margin-bottom:16px; }
+        .parrain-bandeau-titre { font-weight:800; font-size:15px; color:#1a1a1a; margin-bottom:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+        /* ═════ RETRAIT ═════ */
+        .solde-btn-retrait { margin-top:12px; width:100%; padding:10px; border:0; border-radius:8px; font-weight:800;
+            font-size:14px; cursor:pointer; background:#fff; color:#ff5e00; }
+        .solde-btn-retrait:disabled { background:rgba(255,255,255,.35); color:rgba(255,255,255,.85); cursor:not-allowed; }
+        .solde-hint { margin-top:8px; font-size:12px; opacity:.95; line-height:1.4; }
+        .retrait-champ { margin-bottom:12px; }
+        .retrait-champ label { display:block; font-size:13px; font-weight:700; margin-bottom:5px; color:#333; }
+        .retrait-champ input, .retrait-champ select { width:100%; padding:11px; border:1px solid #ddd; border-radius:8px; font-size:15px; }
+        .badge-retrait { font-size:11px; font-weight:800; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+        .badge-retrait.en_attente { background:#fff3e0; color:#e65100; }
+        .badge-retrait.paye { background:#e0ffe8; color:#007a2f; }
+        .badge-retrait.refuse { background:#ffe0e0; color:#cc0000; }
+        .liste-retraits li { align-items:center; }
+        .liste-retraits small { display:block; color:#888; margin-top:2px; }
+        @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="retour-arriere" onclick="if (window.history.length > 1) { history.back(); return false; }" aria-label="Retour">←</a>
+
+    <main>
+
+        <!-- ═══════════════════════════════ -->
+        <!-- CONNEXION                       -->
+        <!-- ═══════════════════════════════ -->
+        <div class="auth-section auth-connexion">
+
+            <div class="auth-visuel">
+                <div class="auth-visuel-contenu">
+                    <div class="auth-logo-badge">
+                        <img src="logo.webp" alt="ESETEC Marketplace">
+                    </div>
+                    <h1 class="auth-titre-marque">ESETEC<br><span>Marketplace</span></h1>
+                    <p class="auth-slogan">« Achetez. Vendez. Échangez. »</p>
+                    <p class="auth-desc">
+                        La marketplace pensée pour les étudiants d'ESETEC. Découvrez des
+                        articles, publiez vos produits et échangez facilement avec les
+                        autres étudiants.
+                    </p>
+                    <div class="auth-badges">
+                        <span class="auth-badge">Achetez</span>
+                        <span class="auth-badge"> Vendez</span>
+                        <span class="auth-badge"> Échangez</span>
+                    </div>
+                </div>
+            </div>
+
+            <section id="connexion" class="auth-carte">
+                <span class="auth-icone-badge">✦</span>
+                <h2>Se connecter</h2>
+                <p class="auth-souscription">Heureux de vous revoir ! Connectez-vous à votre compte ESETEC Marketplace.</p>
+                <div class="auth-separateur"><span>✦</span></div>
+
+                <p id="message_erreur" style="display:none;
+                background:#ffe0e0; color:#cc0000; padding:12px 16px;
+                border-radius:8px; margin-bottom:15px; font-weight:bold;
+                border-left:4px solid #cc0000;">
+                 Email ou mot de passe incorrect.
+            </p>
+            <p id="msg_attente" style="display:none;
+                background:#fff8e1; color:#8b6000; padding:14px 16px;
+                border-radius:8px; margin-bottom:15px; font-weight:bold;
+                border-left:4px solid #f9a825;">
+                ⏳ Votre compte est en attente de validation par l'administrateur.
+            </p>
+            <p id="msg_refuse" style="display:none;
+                background:#ffe0e0; color:#cc0000; padding:14px 16px;
+                border-radius:8px; margin-bottom:15px; font-weight:bold;
+                border-left:4px solid #cc0000;">
+                 Votre demande a été refusée. Contactez l'administrateur.
+            </p>
+            <p id="msg_expire" style="display:none;
+                background:#ffe0e0; color:#cc0000; padding:14px 16px;
+                border-radius:8px; margin-bottom:15px; font-weight:bold;
+                border-left:4px solid #cc0000;">
+                ⌛ Votre abonnement a expiré. Contactez l'administrateur pour renouveler.
+            </p>
+            <form id="form_connexion">
+                <label>Email</label>
+                <input type="email" id="input_email" placeholder="votre@email.com">
+                <label>Mot de passe</label>
+                <input type="password" id="input_mdp" placeholder="••••••••">
+                <p style="text-align:right; margin:8px 0 0;">
+                    <a href="#" onclick="afficherReinitMdp(); return false;" style="color:#ff5e00; font-size:13px; font-weight:bold; text-decoration:none;">
+                        Mot de passe oublié ?
+                    </a>
+                </p>
+                <button type="button" id="btn_connexion" onclick="connecter()">Se connecter</button>
+            </form>
+
+            <!-- ── RÉINITIALISATION DU MOT DE PASSE ── -->
+            <div id="bloc_reinit_mdp" style="display:none;">
+                <p style="font-size:13px; color:#666; margin-bottom:15px; line-height:1.6;">
+                    Entrez l'email et le numéro WhatsApp utilisés à l'inscription pour définir un nouveau mot de passe.
+                </p>
+                <p id="msg_reinit_err" style="display:none;
+                    background:#ffe0e0; color:#cc0000; padding:12px 16px;
+                    border-radius:8px; margin-bottom:15px; font-weight:bold;
+                    border-left:4px solid #cc0000;"></p>
+                <p id="msg_reinit_ok" style="display:none;
+                    background:#e0ffe8; color:#007a2f; padding:12px 16px;
+                    border-radius:8px; margin-bottom:15px; font-weight:bold;
+                    border-left:4px solid #007a2f;">
+                    ✅ Mot de passe mis à jour ! Vous pouvez maintenant vous connecter.
+                </p>
+                <form id="form_reinit">
+                    <label>Email</label>
+                    <input type="email" id="reinit_email" placeholder="votre@email.com">
+                    <label>Numéro WhatsApp</label>
+                    <input type="tel" id="reinit_whatsapp" placeholder="+225 07 XX XX XX XX">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" id="reinit_mdp" placeholder="Minimum 6 caractères">
+                    <label>Confirmer le nouveau mot de passe</label>
+                    <input type="password" id="reinit_mdp2" placeholder="Répétez le mot de passe">
+                    <button type="button" id="btn_reinit" onclick="reinitialiserMdp()">Réinitialiser le mot de passe</button>
+                </form>
+                <p style="text-align:center; margin-top:15px; font-size:14px;">
+                    <a href="#" onclick="masquerReinitMdp(); return false;" style="color:#ff5e00; font-weight:bold; text-decoration:none;">
+                        ← Retour à la connexion
+                    </a>
+                </p>
+            </div>
+
+            <p id="lien_inscription" style="text-align:center; margin-top:15px; font-size:14px; color:#666;">
+                Pas encore de compte ?
+                <a href="espace_vendeur_inscription.html" style="color:#8b2d00; font-weight:bold;">S'inscrire ici</a>
+            </p>
+
+        </section>
+
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- ESPACE VENDEUR (affiché après connexion)        -->
+        <!-- ═══════════════════════════════════════════════ -->
+                <section id="dashboard_vendeur">
+          <div class="dash-grille">
+
+            <aside class="dash-lateral">
+                <div class="dash-marque"><img src="logo.webp" alt=""><span>Espace vendeur</span></div>
+
+                <div class="profil-entete">
+                    <div class="profil-photo-zone">
+                        <div class="profil-photo-cercle" id="profil_photo">?</div>
+                        <label for="profil_photo_input" class="profil-photo-btn" title="Changer la photo">📷</label>
+                        <input type="file" id="profil_photo_input" accept="image/*" style="display:none;" onchange="changerPhotoProfil(this)">
+                    </div>
+                    <div class="profil-infos">
+                        <h2 id="profil_nom">—</h2>
+                        <p id="profil_email">—</p>
+                    </div>
+                </div>
+
+                <div class="solde-barre" id="solde_barre" aria-live="polite">
+                    <div class="solde-label">Mon solde</div>
+                    <div class="solde-montant"><span id="solde_montant">0</span><small>FCFA</small></div>
+                    <button type="button" class="solde-btn-retrait" id="btn_retrait" onclick="ouvrirPopupRetrait()" disabled>Retirer mon argent</button>
+                    <div class="solde-hint" id="solde_hint">Retrait possible dès 1 500 FCFA</div>
+                </div>
+
+                <section id="section_compteur" style="display:none;">
+                    <div id="compteur_abonnement">
+                        <div class="label">Temps restant sur votre abonnement</div>
+                        <div class="temps" id="temps_restant">--</div>
+                        <div class="barre-fond"><div class="barre-remplie" id="barre_progression" style="width:100%;"></div></div>
+                    </div>
+                </section>
+
+                <nav class="dash-onglets" aria-label="Sections de l'espace vendeur">
+                    <button type="button" class="dash-onglet actif" id="btn_onglet_articles" onclick="basculerOngletDash('articles')">Mes articles</button>
+                    <button type="button" class="dash-onglet" id="btn_onglet_ajouter" onclick="basculerOngletDash('ajouter')">Ajouter un article</button>
+                    <button type="button" class="dash-onglet" id="btn_onglet_pub" onclick="basculerOngletDash('pub')">Publicité</button>
+                    <button type="button" class="dash-onglet" id="btn_onglet_parrainage" onclick="basculerOngletDash('parrainage')">Parrainage</button>
+                </nav>
+
+                <button type="button" class="btn-deconnexion" id="btn_deconnexion" onclick="deconnecter()">Se déconnecter</button>
+            </aside>
+
+            <div class="dash-contenu">
+
+                <!-- ── LIEN DE PARRAINAGE (toujours visible) ── -->
+                <div class="parrain-bandeau">
+                    <div class="parrain-bandeau-titre">Mon lien de parrainage <span class="parrain-gain">+500 FCFA par personne</span></div>
+                    <div class="parrain-lien-ligne">
+                        <input type="text" id="parrain_lien" readonly value="Génération du lien..." aria-label="Votre lien de parrainage" onclick="this.select()">
+                        <button type="button" class="parrain-btn copier" id="btn_copier_lien" onclick="copierLienParrainage()">Copier</button>
+                        <button type="button" class="parrain-btn whatsapp" onclick="partagerLienWhatsApp()">WhatsApp</button>
+                    </div>
+                </div>
+
+                <!-- ── MES ARTICLES ── -->
+                <section id="panneau_mes_articles" class="dash-panneau actif">
+                    <div class="panneau-tete"><h2>Mes articles</h2><p>Gérez votre stock, vos photos et vos articles publiés.</p></div>
+                    <div class="stats-ligne">
+                        <div class="stat"><b id="stat_total">0</b><span>Articles publiés</span></div>
+                        <div class="stat dispo"><b id="stat_dispo">0</b><span>Disponibles</span></div>
+                        <div class="stat rupture"><b id="stat_rupture">0</b><span>En rupture</span></div>
+                    </div>
+                    <div class="grille-mes-articles" id="grille_mes_articles">
+                        <p class="aucun-mes-articles">⏳ Chargement...</p>
+                    </div>
+                </section>
+
+                <!-- ── AJOUTER UN ARTICLE ── -->
+                <section id="ajouter_article" class="dash-panneau">
+                    <div class="panneau-tete"><h2>Ajouter un article</h2><p>Il sera visible dans l'espace client dès la publication.</p></div>
+                    <p id="msg_article_ok" class="msg ok" style="display:none;">✅ Article publié avec succès ! Visible dans l'espace client.</p>
+                    <p id="msg_article_err" class="msg err" style="display:none;">❌ Erreur lors de la publication. Vérifiez votre connexion.</p>
+
+                    <form id="form_article">
+                        <div class="form-bloc">
+                            <h3>Photos</h3>
+                            <p class="aide">La première photo (avec l'étoile) est celle affichée sur le site. Cliquez sur une autre photo pour la mettre en avant.</p>
+                            <label class="zone-photos" for="photo_article">
+                                <strong>Choisir des photos</strong>
+                                <span>Plusieurs photos possibles</span>
+                                <input type="file" id="photo_article" accept="image/*" multiple onchange="gererSelectionPhotos(event)">
+                            </label>
+                            <div id="apercu_photos" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+                        </div>
+
+                        <div class="form-bloc">
+                            <h3>Informations</h3>
+                            <div class="champs-grille">
+                                <div class="champ large"><label for="nom_article">Nom de l'article *</label>
+                                    <input type="text" id="nom_article" placeholder="Ex : iPhone 13 Pro"></div>
+                                <div class="champ large"><label for="desc_article">Description *</label>
+                                    <textarea id="desc_article" placeholder="Décrivez votre article..."></textarea></div>
+                                <div class="champ"><label for="prix_article">Prix (FCFA) *</label>
+                                    <input type="number" id="prix_article" placeholder="Ex : 150000"></div>
+                                <div class="champ"><label for="categorie_article">Catégorie</label>
+                                    <select id="categorie_article">
+                                        <option value="Autre">Autre</option>
+                                        <option value="Vêtements">Vêtements</option>
+                                        <option value="Accessoires">Accessoires</option>
+                                        <option value="Informatique">Informatique</option>
+                                        <option value="Fournitures">Fournitures scolaires</option>
+                                        <option value="Alimentation">Alimentation</option>
+                                        <option value="Plat du jour">Plat du jour</option>
+                                        <option value="Électronique">Électronique</option>
+                                    </select></div>
+                                <div class="champ"><label for="stock_article">Stock *</label>
+                                    <select id="stock_article">
+                                        <option value="disponible">Disponible</option>
+                                        <option value="rupture">En rupture de stock</option>
+                                    </select></div>
+                                <div class="champ"><label for="whatsapp_article">Numéro WhatsApp *</label>
+                                    <input type="tel" id="whatsapp_article" placeholder="+225 07 XX XX XX XX"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-bloc">
+                            <h3>Tailles et couleurs <small>(facultatif)</small></h3>
+                            <p class="aide">Le client choisira sa taille et sa couleur avant de commander. Ajoutez les valeurs une par une : pointures (40, 41), tailles (S, M, L), écrans (15 pouces)...</p>
+                            <div class="champs-grille">
+                                <div class="champ"><label for="input_taille">Tailles / pointures</label>
+                                    <div class="ligne-ajout-variante">
+                                        <input type="text" id="input_taille" placeholder="Ex : 42, M, 15 pouces"
+                                            onkeydown="if(event.key==='Enter'){event.preventDefault(); ajouterTaille();}">
+                                        <button type="button" class="btn-ajouter-variante" onclick="ajouterTaille()">Ajouter</button>
+                                    </div>
+                                    <div id="liste_tailles" class="liste-variantes"></div></div>
+                                <div class="champ"><label for="input_couleur">Couleurs</label>
+                                    <div class="ligne-ajout-variante">
+                                        <input type="text" id="input_couleur" placeholder="Ex : Noir"
+                                            onkeydown="if(event.key==='Enter'){event.preventDefault(); ajouterCouleur();}">
+                                        <button type="button" class="btn-ajouter-variante" onclick="ajouterCouleur()">Ajouter</button>
+                                    </div>
+                                    <div id="liste_couleurs" class="liste-variantes"></div></div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btn_publier" class="btn-publier" onclick="publierArticle()">Publier l'article</button>
+                    </form>
+                </section>
+
+                <!-- ── PARRAINAGE ── -->
+                <section id="panneau_parrainage" class="dash-panneau">
+                    <div class="panneau-tete"><h2>Parrainage</h2><p>Partagez votre lien et gagnez de l'argent.</p></div>
+
+                    <div class="parrain-carte">
+                        <h3>Gagnez <span class="parrain-gain">500 FCFA</span> par personne</h3>
+                        <p>Partagez le lien affiché en haut de la page. Chaque fois qu'une personne s'inscrit comme vendeur avec votre lien et que son compte est validé par l'administrateur, 500 FCFA sont ajoutés à votre solde.</p>
+                    </div>
+
+                    <div class="parrain-carte">
+                        <div class="parrain-stats">
+                            <div class="stat dispo"><b id="parrain_nb">0</b><span>Personnes parrainées</span></div>
+                            <div class="stat"><b id="parrain_total">0</b><span>FCFA gagnés</span></div>
+                        </div>
+                        <ul class="liste-filleuls" id="liste_filleuls"><li class="parrain-vide">Aucun filleul pour le moment.</li></ul>
+                    </div>
+
+                    <div class="parrain-carte">
+                        <h3>Mes retraits</h3>
+                        <ul class="liste-filleuls liste-retraits" id="liste_retraits"><li class="parrain-vide">Aucun retrait pour le moment.</li></ul>
+                    </div>
+                </section>
+
+                <!-- ── PUBLICITÉ ── -->
+                <section id="panneau_publicite" class="dash-panneau">
+                    <div class="panneau-tete"><h2>Mettre un article en avant</h2><p>Choisissez l'article à afficher en bannière.</p></div>
+                    <div class="encart-pub-info">
+                        <div class="prix-pub"><strong>1 500 FCFA</strong><span>pour 7 jours</span></div>
+                        <p>Votre article sera affiché en grande bannière sur la page d'accueil et dans l'espace client. Après le paiement, l'administrateur vérifie et publie votre bannière.</p>
+                    </div>
+                    <div class="grille-promo-articles" id="grille_promo_articles">
+                        <p class="aucun-mes-articles">⏳ Chargement...</p>
+                    </div>
+                </section>
+
+            </div>
+          </div>
+        </section>
+
+    </main>
+
+    <!-- POPUP : demande de retrait -->
+    <div class="popup-overlay" id="popup_retrait">
+        <div class="popup-box" role="dialog" aria-modal="true">
+            <h3>Retirer mon argent</h3>
+            <p>Solde disponible : <strong id="retrait_solde_dispo">0</strong> FCFA. Le retrait minimum est de <strong>1 500 FCFA</strong>. L'administrateur envoie l'argent sur votre numéro après vérification.</p>
+            <div class="retrait-champ">
+                <label for="retrait_operateur">Opérateur</label>
+                <select id="retrait_operateur">
+                    <option value="Wave">Wave</option>
+                    <option value="Orange Money">Orange Money</option>
+                </select>
+            </div>
+            <div class="retrait-champ">
+                <label for="retrait_numero">Numéro qui recevra l'argent</label>
+                <input type="tel" id="retrait_numero" placeholder="Ex : 07 XX XX XX XX" inputmode="tel">
+            </div>
+            <div class="retrait-champ">
+                <label for="retrait_montant">Montant à retirer (FCFA)</label>
+                <input type="number" id="retrait_montant" min="1500" step="1">
+            </div>
+            <div id="msg_retrait_err" class="msg err" style="display:none;"></div>
+            <div class="popup-boutons">
+                <button class="btn-annuler" type="button" onclick="fermerPopupRetrait()">Annuler</button>
+                <button class="btn-confirmer" type="button" id="btn_envoyer_retrait" onclick="envoyerRetrait()">Envoyer la demande</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- POPUP : demande de publicité -->
+    <div class="popup-overlay" id="popup_demande_pub">
+        <div class="popup-box" role="dialog" aria-modal="true">
+            <h3>Promouvoir « <span id="popup_pub_nom_article">—</span> »</h3>
+            <p><strong>7 jours</strong> pour <strong>1 500 FCFA</strong>. Payez avec Wave, puis confirmez pour envoyer votre demande à l'administrateur.</p>
+            <a class="btn-wave" href="https://pay.wave.com/m/M_ci_mUsAktmv33Ro/c/ci/" target="_blank" rel="noopener">Payer 1 500 FCFA avec Wave</a>
+            <div id="msg_pub_demande_err" class="msg err" style="display:none;"></div>
+            <div class="popup-boutons">
+                <button class="btn-annuler" type="button" onclick="fermerPopupPub()">Annuler</button>
+                <button class="btn-confirmer" type="button" onclick="envoyerDemandePub()">J'ai payé, envoyer la demande</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, push, set, update, get, remove, query, orderByChild, equalTo, onValue, runTransaction }
+            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0AD4E1t_YuQLHOgsEOy_wQKZ4l9ycrMo",
+            authDomain: "esetec-marketplace.firebaseapp.com",
+            projectId: "esetec-marketplace",
+            storageBucket: "esetec-marketplace.firebasestorage.app",
+            messagingSenderId: "480104714016",
+            appId: "1:480104714016:web:c8b923f80c103701385145",
+            databaseURL: "https://esetec-marketplace-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getDatabase(app);
+
+        // Suppression 100 % Firebase : les photos sont stockées dans l'article, elles partent avec lui
+        async function supprimerFirebase(d) {
+            var refArt = ref(db, "articles/" + d.id);
+            var art = (await get(refArt)).val();
+            if (!art) { throw new Error("Article introuvable."); }
+            if ((vendeurConnecte && vendeurConnecte.email || "").trim().toLowerCase() !==
+                (art.vendeurEmail || "").trim().toLowerCase()) {
+                throw new Error("Cet article n'est pas à toi.");
+            }
+            if (d.cible === "photo") {
+                var photos = Array.isArray(art.photos) ? art.photos.slice() : [];
+                if (!Number.isInteger(d.index) || d.index < 0 || d.index >= photos.length) { throw new Error("Photo introuvable."); }
+                photos.splice(d.index, 1);
+                await update(refArt, { photos: photos.length ? photos : null });
+            } else {
+                await remove(refArt);
+            }
+            return { ok: true };
+        }
+
+        // Clé utilisée pour garder la session ouverte d'une page à l'autre
+        // et faire apparaître "Mon compte" dans la barre de navigation du site.
+        const CLE_SESSION_VENDEUR = "esetec_vendeur_id";
+        const CLE_CACHE_VENDEUR   = "esetec_vendeur_cache";
+
+        function memoriserCache(id, d) {
+            try {
+                localStorage.setItem(CLE_CACHE_VENDEUR, JSON.stringify({
+                    id: id, nom: d.nom, email: d.email, whatsapp: d.whatsapp,
+                    statut: d.statut, dateExpiration: d.dateExpiration
+                }));
+            } catch (e) {}
+        }
+        function lireCache(id) {
+            try {
+                var c = JSON.parse(localStorage.getItem(CLE_CACHE_VENDEUR) || "null");
+                return (c && c.id === id) ? c : null;
+            } catch (e) { return null; }
+        }
+        function effacerSession() {
+            try { localStorage.removeItem(CLE_SESSION_VENDEUR); localStorage.removeItem(CLE_CACHE_VENDEUR); } catch (e) {}
+            document.documentElement.classList.remove("session-vendeur");
+        }
+
+        const DUREE_ABONNEMENT = 30 * 24 * 60 * 60 * 1000;
+        var vendeurConnecte   = null;
+        var idVendeurConnecte = null;
+        var intervalCompteur  = null;
+
+        // ══════════════════════════════════════
+        // RECHERCHE D'UN VENDEUR PAR EMAIL (fiable même si la casse
+        // ou des espaces diffèrent entre ce qui a été saisi et ce qui
+        // est enregistré dans la base)
+        // ══════════════════════════════════════
+        async function trouverVendeurParEmail(email) {
+            var cible = (email || "").trim().toLowerCase();
+            var resultat = null;
+
+            // Chemin rapide : uniquement le vendeur concerné (au lieu de tous les vendeurs)
+            try {
+                var rapide = await get(query(ref(db, "vendeurs"), orderByChild("email"), equalTo(cible)));
+                if (rapide.exists()) {
+                    rapide.forEach(function(e) { resultat = { id: e.key, data: e.val() }; });
+                    if (resultat) { return resultat; }
+                }
+            } catch (err) { console.warn("Recherche rapide indisponible, recherche complète :", err); }
+
+            // Secours : recherche complète (email enregistré avec une autre casse, etc.)
+            var snap  = await get(ref(db, "vendeurs"));
+            if (snap.exists()) {
+                snap.forEach(function(e) {
+                    var v = e.val();
+                    if ((v.email || "").trim().toLowerCase() === cible) {
+                        resultat = { id: e.key, data: v };
+                    }
+                });
+            }
+            return resultat;
+        }
+
+        // ══════════════════════════════════════
+        // CONNEXION
+        // ══════════════════════════════════════
+        window.connecter = async function() {
+            var email = document.getElementById("input_email").value.trim().toLowerCase();
+            var mdp   = document.getElementById("input_mdp").value;
+
+            ["message_erreur","msg_attente","msg_refuse","msg_expire"].forEach(function(id) {
+                document.getElementById(id).style.display = "none";
+            });
+
+            if (!email || !mdp) {
+                document.getElementById("message_erreur").style.display = "block"; return;
+            }
+
+            var btn = document.getElementById("btn_connexion");
+            btn.textContent = "⏳ Connexion..."; btn.disabled = true;
+
+            try {
+                var trouve = await trouverVendeurParEmail(email);
+                if (!trouve) {
+                    document.getElementById("message_erreur").style.display = "block";
+                    btn.textContent = "Se connecter"; btn.disabled = false; return;
+                }
+
+                var vendeurData = trouve.data;
+
+                if (vendeurData.mdp !== mdp) {
+                    document.getElementById("message_erreur").style.display = "block";
+                    btn.textContent = "Se connecter"; btn.disabled = false; return;
+                }
+                if (vendeurData.statut === "en_attente") {
+                    document.getElementById("msg_attente").style.display = "block";
+                    btn.textContent = "Se connecter"; btn.disabled = false; return;
+                }
+                if (vendeurData.statut === "refuse") {
+                    document.getElementById("msg_refuse").style.display = "block";
+                    btn.textContent = "Se connecter"; btn.disabled = false; return;
+                }
+                if (vendeurData.statut === "actif") {
+                    if (vendeurData.dateExpiration && Date.now() > vendeurData.dateExpiration) {
+                        document.getElementById("msg_expire").style.display = "block";
+                        btn.textContent = "Se connecter"; btn.disabled = false; return;
+                    }
+
+                    // ✅ Connexion réussie
+                    ouvrirEspaceVendeur(vendeurData, trouve.id, true);
+                }
+            } catch(err) {
+                document.getElementById("message_erreur").style.display = "block"; console.error(err);
+            }
+            btn.textContent = "Se connecter"; btn.disabled = false;
+        };
+
+        // ══════════════════════════════════════
+        // AFFICHER L'ESPACE VENDEUR (après connexion,
+        // ou après restauration automatique de la session)
+        // ══════════════════════════════════════
+        function ouvrirEspaceVendeur(vendeurData, id, memoriserSession) {
+            vendeurConnecte   = vendeurData;
+            idVendeurConnecte = id;
+
+            // Cacher la connexion, afficher l'espace vendeur
+            document.querySelector(".auth-connexion").style.display = "none";
+            document.getElementById("dashboard_vendeur").style.display = "block";
+
+            // Remplir le profil
+            document.getElementById("profil_nom").textContent   = vendeurData.nom;
+            document.getElementById("profil_email").textContent = vendeurData.email;
+            afficherPhotoProfil(vendeurData.photo, vendeurData.nom);
+
+            // Revenir sur l'onglet "Mes articles" par défaut
+            basculerOngletDash("articles");
+
+            // Charger les articles déjà publiés par ce vendeur
+            chargerMesArticles();
+
+            // Pré-remplir WhatsApp du formulaire de publication
+            document.getElementById("whatsapp_article").value = vendeurData.whatsapp || "";
+
+            // Démarrer le compteur d'abonnement
+            demarrerCompteur(vendeurData.dateExpiration);
+
+            // Solde + lien de parrainage
+            initialiserParrainage(id);
+
+            // Garder la session ouverte : permet à "Mon compte" d'apparaître
+            // dans la barre de navigation des autres pages du site, et de
+            // revenir directement sur ce tableau de bord au prochain passage.
+            if (memoriserSession) {
+                try { localStorage.setItem(CLE_SESSION_VENDEUR, id); } catch(e) {}
+                memoriserCache(id, vendeurData);
+            }
+        }
+
+        // ══════════════════════════════════════
+        // RESTAURER UNE SESSION DÉJÀ OUVERTE
+        // (arrivée sur la page via "Mon compte" ou après rechargement)
+        // ══════════════════════════════════════
+        async function restaurerSessionVendeur() {
+            var id;
+            try { id = localStorage.getItem(CLE_SESSION_VENDEUR); } catch(e) { id = null; }
+            if (!id) return;
+
+            var dash = document.getElementById("dashboard_vendeur");
+
+            // 1) Affichage immédiat avec le profil mémorisé : plus d'attente, plus de formulaire de connexion
+            var cache = lireCache(id);
+            var ouvertDepuisCache = false;
+            if (cache && cache.statut === "actif") {
+                ouvrirEspaceVendeur(cache, id, false);
+                ouvertDepuisCache = true;
+            } else if (dash) {
+                dash.classList.add("dash-attente");
+            }
+
+            // 2) Vérification en arrière-plan auprès de la base
+            try {
+                var snap = await get(ref(db, "vendeurs/" + id));
+                if (!snap.exists()) { effacerSession(); if (ouvertDepuisCache) { window.deconnecter(); } return; }
+
+                var vendeurData = snap.val();
+                if (vendeurData.statut !== "actif") {
+                    // Compte désactivé/refusé entre-temps par l'admin : on ferme la session.
+                    effacerSession();
+                    if (ouvertDepuisCache) { window.deconnecter(); }
+                    return;
+                }
+                memoriserCache(id, vendeurData);
+
+                if (ouvertDepuisCache) {
+                    // Mise à jour discrète des infos (photo, abonnement...) sans tout recharger
+                    vendeurConnecte = vendeurData;
+                    document.getElementById("profil_nom").textContent   = vendeurData.nom;
+                    document.getElementById("profil_email").textContent = vendeurData.email;
+                    afficherPhotoProfil(vendeurData.photo, vendeurData.nom);
+                    demarrerCompteur(vendeurData.dateExpiration);
+                } else {
+                    ouvrirEspaceVendeur(vendeurData, id, false);
+                }
+            } catch(err) {
+                // Réseau lent ou coupé : la session reste ouverte, on ne déconnecte jamais pour ça
+                console.error(err);
+                if (!ouvertDepuisCache) {
+                    document.documentElement.classList.remove("session-vendeur");
+                }
+            }
+            if (dash) { dash.classList.remove("dash-attente"); }
+        }
+        // On attend que tout le script soit chargé (fonctions, onglets, parrainage...) avant de restaurer
+        setTimeout(restaurerSessionVendeur, 0);
+
+        // ══════════════════════════════════════
+        // MOT DE PASSE OUBLIÉ
+        // ══════════════════════════════════════
+        window.afficherReinitMdp = function() {
+            document.getElementById("form_connexion").style.display   = "none";
+            document.getElementById("lien_inscription").style.display = "none";
+            document.getElementById("bloc_reinit_mdp").style.display  = "block";
+        };
+
+        window.masquerReinitMdp = function() {
+            document.getElementById("bloc_reinit_mdp").style.display   = "none";
+            document.getElementById("form_connexion").style.display    = "flex";
+            document.getElementById("lien_inscription").style.display  = "block";
+            document.getElementById("msg_reinit_err").style.display    = "none";
+            document.getElementById("msg_reinit_ok").style.display     = "none";
+            document.getElementById("form_reinit").reset();
+        };
+
+        window.reinitialiserMdp = async function() {
+            var email     = document.getElementById("reinit_email").value.trim().toLowerCase();
+            var whatsapp  = document.getElementById("reinit_whatsapp").value.trim();
+            var mdp       = document.getElementById("reinit_mdp").value;
+            var mdp2      = document.getElementById("reinit_mdp2").value;
+            var errEl     = document.getElementById("msg_reinit_err");
+            var okEl      = document.getElementById("msg_reinit_ok");
+            errEl.style.display = "none";
+            okEl.style.display  = "none";
+
+            if (!email || !whatsapp || !mdp || !mdp2) {
+                errEl.textContent = "❌ Veuillez remplir tous les champs.";
+                errEl.style.display = "block"; return;
+            }
+            if (mdp.length < 6) {
+                errEl.textContent = "❌ Le mot de passe doit contenir au moins 6 caractères.";
+                errEl.style.display = "block"; return;
+            }
+            if (mdp !== mdp2) {
+                errEl.textContent = "❌ Les mots de passe ne correspondent pas.";
+                errEl.style.display = "block"; return;
+            }
+
+            var btn = document.getElementById("btn_reinit");
+            btn.textContent = "⏳ Vérification..."; btn.disabled = true;
+
+            try {
+                var trouve = await trouverVendeurParEmail(email);
+                if (!trouve) {
+                    errEl.textContent = "❌ Aucun compte trouvé avec cet email.";
+                    errEl.style.display = "block";
+                    btn.textContent = "Réinitialiser le mot de passe"; btn.disabled = false; return;
+                }
+
+                var idVendeur = trouve.id, vendeurData = trouve.data;
+
+                var whatsappSaisi  = whatsapp.replace(/[^0-9]/g, "");
+                var whatsappStocke = (vendeurData.whatsapp || "").replace(/[^0-9]/g, "");
+
+                if (!whatsappStocke || whatsappSaisi !== whatsappStocke) {
+                    errEl.textContent = "❌ Le numéro WhatsApp ne correspond pas à celui fourni lors de l'inscription.";
+                    errEl.style.display = "block";
+                    btn.textContent = "Réinitialiser le mot de passe"; btn.disabled = false; return;
+                }
+
+                await update(ref(db, "vendeurs/" + idVendeur), { mdp: mdp });
+                okEl.style.display = "block";
+                document.getElementById("form_reinit").reset();
+            } catch(err) {
+                errEl.textContent = "❌ Erreur technique. Réessayez.";
+                errEl.style.display = "block"; console.error(err);
+            }
+            btn.textContent = "Réinitialiser le mot de passe"; btn.disabled = false;
+        };
+
+        // ══════════════════════════════════════
+        // COMPTEUR
+        // ══════════════════════════════════════
+        function demarrerCompteur(dateExpiration) {
+            if (intervalCompteur) { clearInterval(intervalCompteur); intervalCompteur = null; }
+            document.getElementById("section_compteur").style.display    = "block";
+            document.getElementById("compteur_abonnement").style.display = "block";
+
+            function maj() {
+                var restant     = dateExpiration - Date.now();
+                var progression = Math.max(0, restant / DUREE_ABONNEMENT * 100);
+                document.getElementById("barre_progression").style.width = progression + "%";
+
+                if (restant <= 0) {
+                    document.getElementById("temps_restant").textContent = "⌛ Abonnement expiré";
+                    document.getElementById("compteur_abonnement").classList.add("expire");
+                    document.getElementById("btn_publier").disabled = true;
+                    document.getElementById("btn_publier").textContent = "⌛ Abonnement expiré";
+                    clearInterval(intervalCompteur);
+                    return;
+                }
+                var j = Math.floor(restant / 86400000);
+                var h = Math.floor((restant % 86400000) / 3600000);
+                var m = Math.floor((restant % 3600000) / 60000);
+                var s = Math.floor((restant % 60000) / 1000);
+                document.getElementById("temps_restant").textContent = j+" j  "+h+" h  "+m+" min  "+s+" sec";
+            }
+            maj();
+            intervalCompteur = setInterval(maj, 1000);
+        }
+
+        // ══════════════════════════════════════
+        // PHOTO DE PROFIL
+        // ══════════════════════════════════════
+        function afficherPhotoProfil(photo, nom) {
+            var el = document.getElementById("profil_photo");
+            if (photo) {
+                el.style.backgroundImage = "url('" + photo + "')";
+                el.textContent = "";
+            } else {
+                el.style.backgroundImage = "none";
+                el.textContent = (nom || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        window.changerPhotoProfil = async function(inputEl) {
+            var fichier = inputEl.files[0];
+            if (!fichier || !idVendeurConnecte) return;
+
+            try {
+                var photoProfil = await compresserImage(fichier, 300, 0.7);
+                await update(ref(db, "vendeurs/" + idVendeurConnecte), { photo: photoProfil });
+                vendeurConnecte.photo = photoProfil;
+                afficherPhotoProfil(photoProfil, vendeurConnecte.nom);
+            } catch(err) {
+                alert("Erreur lors de l'envoi de la photo. Réessayez.");
+                console.error(err);
+            }
+            inputEl.value = "";
+        };
+
+        // ══════════════════════════════════════
+        // SOLDE + LIEN DE PARRAINAGE
+        // ══════════════════════════════════════
+        var arretsParrainage = [];
+        var lienParrainage   = "";
+        var soldeActuel      = 0;
+        var SEUIL_RETRAIT    = 1500;
+
+        function arreterEcouteParrainage() {
+            arretsParrainage.forEach(function(f) { try { f(); } catch(e) {} });
+            arretsParrainage = [];
+            lienParrainage = "";
+            document.getElementById("solde_montant").textContent = "0";
+            soldeActuel = 0;
+            majBoutonRetrait();
+            document.getElementById("liste_retraits").innerHTML = "<li class='parrain-vide'>Aucun retrait pour le moment.</li>";
+            document.getElementById("parrain_lien").value = "Génération du lien...";
+            document.getElementById("liste_filleuls").innerHTML = "<li class='parrain-vide'>Aucun filleul pour le moment.</li>";
+        }
+
+        // Code aléatoire de 8 caractères (sans 0/O/1/I pour éviter les confusions)
+        function genererCodeAleatoire() {
+            var alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var octets = new Uint32Array(8);
+            window.crypto.getRandomValues(octets);
+            var code = "";
+            for (var i = 0; i < 8; i++) { code += alphabet.charAt(octets[i] % alphabet.length); }
+            return code;
+        }
+
+        // Génère le code UNE seule fois : ensuite il est lu dans la base et ne change plus.
+        async function obtenirCodeParrainage(id) {
+            var existant = (await get(ref(db, "vendeurs/" + id + "/codeParrainage"))).val();
+            if (existant) return existant;
+
+            for (var essai = 0; essai < 8; essai++) {
+                var code = genererCodeAleatoire();
+
+                // Réserve le code (échoue s'il appartient déjà à quelqu'un d'autre)
+                var r = await runTransaction(ref(db, "parrainages/" + code), function(actuel) {
+                    return actuel === null ? id : undefined;
+                });
+                if (!r.committed) continue;
+
+                // L'enregistre sur le vendeur, seulement s'il n'en a pas déjà un (2 onglets ouverts en même temps)
+                var t = await runTransaction(ref(db, "vendeurs/" + id + "/codeParrainage"), function(actuel) {
+                    return actuel === null ? code : undefined;
+                });
+                if (t.committed) return code;
+
+                // Un autre onglet a gagné : on libère notre code et on utilise le sien
+                try { await remove(ref(db, "parrainages/" + code)); } catch (e) { /* sans importance : le code reste simplement inutilisé */ }
+                return (await get(ref(db, "vendeurs/" + id + "/codeParrainage"))).val();
+            }
+            throw new Error("Impossible de générer un code de parrainage.");
+        }
+
+        function formaterFCFA(n) { return (parseInt(n, 10) || 0).toLocaleString("fr-FR"); }
+
+        async function initialiserParrainage(id) {
+            arreterEcouteParrainage();
+
+            try {
+                // Solde initialisé à 0 s'il n'existe pas encore
+                await runTransaction(ref(db, "vendeurs/" + id + "/solde"), function(actuel) {
+                    return actuel === null ? 0 : undefined;
+                });
+
+                // Affichage du solde en direct
+                arretsParrainage.push(onValue(ref(db, "vendeurs/" + id + "/solde"), function(snap) {
+                    soldeActuel = parseInt(snap.val(), 10) || 0;
+                    document.getElementById("solde_montant").textContent = formaterFCFA(soldeActuel);
+                    majBoutonRetrait();
+                }));
+
+                // Liste des filleuls en direct
+                arretsParrainage.push(onValue(ref(db, "vendeurs/" + id + "/filleuls"), function(snap) {
+                    var liste = [], total = 0;
+                    if (snap.exists()) {
+                        snap.forEach(function(e) { var f = e.val(); liste.push(f); total += (f.montant || 0); });
+                    }
+                    liste.sort(function(a, b) { return (b.date || 0) - (a.date || 0); });
+                    document.getElementById("parrain_nb").textContent    = liste.length;
+                    document.getElementById("parrain_total").textContent = formaterFCFA(total);
+
+                    var ul = document.getElementById("liste_filleuls");
+                    if (!liste.length) { ul.innerHTML = "<li class='parrain-vide'>Aucun filleul pour le moment.</li>"; return; }
+                    ul.innerHTML = "";
+                    liste.forEach(function(f) {
+                        var li = document.createElement("li");
+                        var nom = document.createElement("span");
+                        nom.textContent = (f.nom || "Vendeur") + (f.date ? " — " + new Date(f.date).toLocaleDateString("fr-FR") : "");
+                        var gain = document.createElement("b");
+                        gain.textContent = "+" + formaterFCFA(f.montant) + " FCFA";
+                        li.appendChild(nom); li.appendChild(gain);
+                        ul.appendChild(li);
+                    });
+                }));
+
+                // Historique des retraits en direct
+                arretsParrainage.push(onValue(ref(db, "vendeurs/" + id + "/retraits"), function(snap) {
+                    var liste = [];
+                    if (snap.exists()) { snap.forEach(function(e) { liste.push(e.val()); }); }
+                    liste.sort(function(a, b) { return (b.date || 0) - (a.date || 0); });
+                    var ul = document.getElementById("liste_retraits");
+                    if (!liste.length) { ul.innerHTML = "<li class='parrain-vide'>Aucun retrait pour le moment.</li>"; return; }
+                    ul.innerHTML = "";
+                    var textes = { en_attente: "En attente", paye: "Payé", refuse: "Refusé (remboursé)" };
+                    liste.forEach(function(r) {
+                        var li = document.createElement("li");
+                        var gauche = document.createElement("span");
+                        gauche.textContent = formaterFCFA(r.montant) + " FCFA — " + (r.operateur || "");
+                        var petit = document.createElement("small");
+                        petit.textContent = (r.date ? new Date(r.date).toLocaleDateString("fr-FR") : "") + " · " + (r.numero || "");
+                        gauche.appendChild(petit);
+                        var badge = document.createElement("span");
+                        var st = textes[r.statut] ? r.statut : "en_attente";
+                        badge.className = "badge-retrait " + st;
+                        badge.textContent = textes[st];
+                        li.appendChild(gauche); li.appendChild(badge);
+                        ul.appendChild(li);
+                    });
+                }));
+
+                // Lien de parrainage permanent
+                var code = await obtenirCodeParrainage(id);
+                var base = new URL("espace_vendeur_inscription.html", window.location.href);
+                base.search = "?ref=" + encodeURIComponent(code);
+                base.hash = "";
+                lienParrainage = base.href;
+                document.getElementById("parrain_lien").value = lienParrainage;
+            } catch (err) {
+                console.error(err);
+                document.getElementById("parrain_lien").value = "Erreur : rechargez la page.";
+            }
+        }
+
+        // ── RETRAIT ──
+        function majBoutonRetrait() {
+            var btn = document.getElementById("btn_retrait");
+            var hint = document.getElementById("solde_hint");
+            var ok = soldeActuel >= SEUIL_RETRAIT;
+            btn.disabled = !ok;
+            hint.textContent = ok
+                ? "Vous pouvez retirer votre argent."
+                : "Retrait possible dès 1 500 FCFA (encore " + formaterFCFA(SEUIL_RETRAIT - soldeActuel) + " FCFA)";
+        }
+
+        window.ouvrirPopupRetrait = function() {
+            if (soldeActuel < SEUIL_RETRAIT) return;
+            document.getElementById("retrait_solde_dispo").textContent = formaterFCFA(soldeActuel);
+            document.getElementById("retrait_montant").value = soldeActuel;
+            document.getElementById("retrait_montant").max = soldeActuel;
+            document.getElementById("msg_retrait_err").style.display = "none";
+            document.getElementById("popup_retrait").classList.add("actif");
+        };
+
+        window.fermerPopupRetrait = function() {
+            document.getElementById("popup_retrait").classList.remove("actif");
+        };
+
+        window.envoyerRetrait = async function() {
+            var errEl = document.getElementById("msg_retrait_err");
+            var btn   = document.getElementById("btn_envoyer_retrait");
+            errEl.style.display = "none";
+            function erreur(msg) { errEl.textContent = "❌ " + msg; errEl.style.display = "block"; }
+
+            if (!idVendeurConnecte) return;
+
+            var operateur = document.getElementById("retrait_operateur").value;
+            var chiffres  = document.getElementById("retrait_numero").value.replace(/\D/g, "");
+            if (chiffres.length === 13 && chiffres.indexOf("225") === 0) { chiffres = chiffres.slice(3); }
+            var montant   = parseInt(document.getElementById("retrait_montant").value, 10);
+
+            if (operateur !== "Wave" && operateur !== "Orange Money") { erreur("Choisissez Wave ou Orange Money."); return; }
+            if (!/^\d{10}$/.test(chiffres)) { erreur("Entrez un numéro valide à 10 chiffres."); return; }
+            if (!montant || montant < SEUIL_RETRAIT) { erreur("Le montant minimum est de 1 500 FCFA."); return; }
+            if (montant > soldeActuel) { erreur("Le montant dépasse votre solde."); return; }
+
+            btn.disabled = true; btn.textContent = "⏳ Envoi...";
+            var id = idVendeurConnecte;
+            var debite = false;
+
+            try {
+                // 1. On retire le montant du solde tout de suite (impossible de retirer deux fois la même somme)
+                var tr = await runTransaction(ref(db, "vendeurs/" + id + "/solde"), function(solde) {
+                    solde = parseInt(solde, 10) || 0;
+                    return solde >= montant ? solde - montant : undefined;
+                });
+                if (!tr.committed) { erreur("Solde insuffisant."); return; }
+                debite = true;
+
+                // 2. On enregistre la demande (pour l'admin) et son double dans le compte du vendeur
+                var cle  = push(ref(db, "retraits")).key;
+                var date = Date.now();
+                var maj  = {};
+                maj["retraits/" + cle] = {
+                    vendeurId: id, nom: vendeurConnecte.nom || "", email: vendeurConnecte.email || "",
+                    montant: montant, operateur: operateur, numero: chiffres,
+                    statut: "en_attente", date: date
+                };
+                maj["vendeurs/" + id + "/retraits/" + cle] = {
+                    montant: montant, operateur: operateur, numero: chiffres,
+                    statut: "en_attente", date: date
+                };
+                await update(ref(db), maj);
+                debite = false;
+
+                fermerPopupRetrait();
+                basculerOngletDash("parrainage");
+            } catch (err) {
+                console.error(err);
+                // Échec après le débit : on rend l'argent au vendeur
+                if (debite) {
+                    try {
+                        await runTransaction(ref(db, "vendeurs/" + id + "/solde"), function(solde) {
+                            return (parseInt(solde, 10) || 0) + montant;
+                        });
+                    } catch (e2) { console.error(e2); }
+                }
+                erreur("Erreur technique. Votre solde n'a pas été débité. Réessayez.");
+            } finally {
+                btn.disabled = false; btn.textContent = "Envoyer la demande";
+            }
+        };
+
+        window.copierLienParrainage = async function() {
+            if (!lienParrainage) return;
+            var btn = document.getElementById("btn_copier_lien");
+            try {
+                await navigator.clipboard.writeText(lienParrainage);
+            } catch (e) {
+                var champ = document.getElementById("parrain_lien");
+                champ.select(); champ.setSelectionRange(0, 99999);
+                try { document.execCommand("copy"); } catch (e2) {}
+            }
+            btn.textContent = "Copié ✓";
+            setTimeout(function() { btn.textContent = "Copier"; }, 2000);
+        };
+
+        window.partagerLienWhatsApp = function() {
+            if (!lienParrainage) return;
+            var texte = "Rejoins-moi comme vendeur sur ESETEC Online Market : " + lienParrainage;
+            window.open("https://wa.me/?text=" + encodeURIComponent(texte), "_blank", "noopener,noreferrer");
+        };
+
+        // ══════════════════════════════════════
+        // ONGLETS DE L'ESPACE VENDEUR
+        // ══════════════════════════════════════
+        window.basculerOngletDash = function(nom) {
+            document.getElementById("btn_onglet_articles").classList.toggle("actif", nom === "articles");
+            document.getElementById("btn_onglet_ajouter").classList.toggle("actif", nom === "ajouter");
+            document.getElementById("btn_onglet_pub").classList.toggle("actif", nom === "pub");
+            document.getElementById("panneau_mes_articles").classList.toggle("actif", nom === "articles");
+            document.getElementById("ajouter_article").classList.toggle("actif", nom === "ajouter");
+            document.getElementById("panneau_publicite").classList.toggle("actif", nom === "pub");
+            document.getElementById("btn_onglet_parrainage").classList.toggle("actif", nom === "parrainage");
+            document.getElementById("panneau_parrainage").classList.toggle("actif", nom === "parrainage");
+            if (nom === "pub") { chargerPanneauPublicite(); }
+        };
+
+        // ══════════════════════════════════════
+        // MES ARTICLES PUBLIÉS
+        // ══════════════════════════════════════
+        // Les images sont déjà compressées à l'envoi : on les utilise telles quelles
+        function vignette(url) { return url; }
+
+        window.chargerMesArticles = async function() {
+            var grille = document.getElementById("grille_mes_articles");
+            grille.innerHTML = "<p class='aucun-mes-articles'>⏳ Chargement...</p>";
+
+            try {
+                var snap = await get(ref(db, "articles"));
+                var mesArticles = [];
+                var monEmail = (vendeurConnecte.email || "").trim().toLowerCase();
+
+                if (snap.exists()) {
+                    snap.forEach(function(e) {
+                        var a = e.val();
+                        if ((a.vendeurEmail || "").trim().toLowerCase() === monEmail) {
+                            a.id = e.key;
+                            mesArticles.push(a);
+                        }
+                    });
+                    mesArticles.reverse();
+                }
+
+                var nbRupture = mesArticles.filter(function(x) { return x.stock === "rupture"; }).length;
+                document.getElementById("stat_total").textContent   = mesArticles.length;
+                document.getElementById("stat_dispo").textContent   = mesArticles.length - nbRupture;
+                document.getElementById("stat_rupture").textContent = nbRupture;
+
+                if (mesArticles.length === 0) {
+                    grille.innerHTML = "<div class='aucun-mes-articles'>Vous n'avez encore publié aucun article.<br><button type='button' class='btn-vide' onclick=\"basculerOngletDash('ajouter')\">Publier mon premier article</button></div>";
+                    return;
+                }
+
+                if (window.EsetecLazy) { window.EsetecLazy.release(grille); }
+                grille.innerHTML = "";
+                mesArticles.forEach(function(a) {
+                    var carte = document.createElement("div");
+                    carte.className = "mini-carte-article";
+
+                    var photoPrincipale = (a.photos && a.photos[0]) || a.photo;
+                    var photoHTML = photoPrincipale
+                        ? "<img alt=''>"
+                        : "<div class='no-photo'>📦</div>";
+
+                    var prixFormate = a.prix
+                        ? parseInt(a.prix).toLocaleString("fr-FR") + " FCFA"
+                        : "Prix non défini";
+
+                    var dateFormatee = a.date ? new Date(a.date).toLocaleDateString("fr-FR") : "";
+
+                    var stockActuel  = a.stock === "rupture" ? "rupture" : "disponible";
+                    var badgeStockHTML = stockActuel === "rupture"
+                        ? "<span class='badge-stock rupture'>Rupture de stock</span>"
+                        : "<span class='badge-stock disponible'>Disponible</span>";
+                    var btnStockHTML = stockActuel === "rupture"
+                        ? "<button type='button' class='btn-stock rupture' onclick=\"basculerStock('" + a.id + "','disponible')\">Remettre en stock</button>"
+                        : "<button type='button' class='btn-stock disponible' onclick=\"basculerStock('" + a.id + "','rupture')\">Marquer en rupture</button>";
+
+                    var btnSupprimerHTML = "<button type='button' class='btn-supprimer-article' onclick=\"supprimerArticle('" + a.id + "','" + (a.nom || "").replace(/'/g, "\\'") + "')\">Supprimer</button>";
+
+                    var miniaturesHTML = "";
+                    if (a.photos && a.photos.length) {
+                        miniaturesHTML = "<div class='miniatures-photos'>";
+                        a.photos.forEach(function(p, i) {
+                            miniaturesHTML += "<span class='miniature-photo'><img src='" + vignette(p) + "' alt='' loading='lazy'>" +
+                                "<button type='button' title='Supprimer cette photo' aria-label='Supprimer cette photo' " +
+                                "onclick=\"supprimerPhotoArticle('" + a.id + "'," + i + ")\">✕</button></span>";
+                        });
+                        miniaturesHTML += "</div>";
+                    }
+
+                    var variantesHTML = "";
+                    if ((a.tailles && a.tailles.length) || (a.couleurs && a.couleurs.length)) {
+                        variantesHTML = "<div class='variantes-mini'>";
+                        if (a.tailles && a.tailles.length) variantesHTML += "📏 " + a.tailles.join(", ");
+                        if (a.couleurs && a.couleurs.length) variantesHTML += (a.tailles && a.tailles.length ? "<br>" : "") + "🎨 " + a.couleurs.join(", ");
+                        variantesHTML += "</div>";
+                    }
+
+                    carte.innerHTML =
+                        photoHTML +
+                        "<div class='info'>" +
+                        "<div class='nom'>" + a.nom + "</div>" +
+                        "<div class='prix'>" + prixFormate + "</div>" +
+                        "<div class='date'>Publié le " + dateFormatee + "</div>" +
+                        variantesHTML +
+                        miniaturesHTML +
+                        "</div>" +
+                        "<div class='actions'>" + badgeStockHTML + btnStockHTML + btnSupprimerHTML + "</div>";
+
+                    // Photo chargée seulement à l'approche de l'écran (skeleton en attendant)
+                    var imgLazy = carte.querySelector("img");
+                    if (imgLazy && photoPrincipale) {
+                        imgLazy.alt = a.nom || "";
+                        if (window.EsetecLazy) { window.EsetecLazy.watch(imgLazy, photoPrincipale); }
+                        else { imgLazy.src = photoPrincipale; }
+                    }
+
+                    grille.appendChild(carte);
+                });
+            } catch(err) {
+                grille.innerHTML = "<p class='aucun-mes-articles'>❌ Erreur de chargement.</p>";
+                console.error(err);
+            }
+        };
+
+        // ══════════════════════════════════════
+        // PUBLICITÉ — METTRE UN ARTICLE EN AVANT
+        // ══════════════════════════════════════
+        var articlePourPromo = null; // { id, nom }
+
+        window.chargerPanneauPublicite = async function() {
+            var grille = document.getElementById("grille_promo_articles");
+            grille.innerHTML = "<p class='aucun-mes-articles'>⏳ Chargement...</p>";
+
+            try {
+                var monEmail = (vendeurConnecte.email || "").trim().toLowerCase();
+
+                // Mes articles
+                var snapArticles = await get(ref(db, "articles"));
+                var mesArticles = [];
+                if (snapArticles.exists()) {
+                    snapArticles.forEach(function(e) {
+                        var a = e.val();
+                        if ((a.vendeurEmail || "").trim().toLowerCase() === monEmail) {
+                            a.id = e.key;
+                            mesArticles.push(a);
+                        }
+                    });
+                    mesArticles.reverse();
+                }
+
+                if (mesArticles.length === 0) {
+                    grille.innerHTML = "<p class='aucun-mes-articles'>📦 Publiez d'abord un article pour pouvoir le promouvoir.</p>";
+                    return;
+                }
+
+                // Mes demandes de publicité (toutes, pour connaître le statut le plus récent par article)
+                var snapDemandes = await get(ref(db, "demandes_pub"));
+                var demandesParArticle = {};
+                if (snapDemandes.exists()) {
+                    snapDemandes.forEach(function(e) {
+                        var d = e.val();
+                        if ((d.vendeurEmail || "").trim().toLowerCase() === monEmail && d.articleId) {
+                            // On garde la plus récente par article
+                            var actuelle = demandesParArticle[d.articleId];
+                            if (!actuelle || (d.date || "") > (actuelle.date || "")) {
+                                demandesParArticle[d.articleId] = d;
+                            }
+                        }
+                    });
+                }
+
+                // Publicités déjà publiées et actives, liées à un article
+                var snapPubs = await get(ref(db, "publicites"));
+                var pubsActivesParArticle = {};
+                if (snapPubs.exists()) {
+                    snapPubs.forEach(function(e) {
+                        var p = e.val();
+                        if (p.idArticle && p.actif !== false) { pubsActivesParArticle[p.idArticle] = true; }
+                    });
+                }
+
+                if (window.EsetecLazy) { window.EsetecLazy.release(grille); }
+                grille.innerHTML = "";
+                mesArticles.forEach(function(a) {
+                    var carte = document.createElement("div");
+                    carte.className = "carte-promo-article";
+
+                    var photoPrincipale = (a.photos && a.photos[0]) || a.photo;
+                    var photoHTML = photoPrincipale
+                        ? "<img alt=''>"
+                        : "<div class='no-photo'>📦</div>";
+
+                    var demande = demandesParArticle[a.id];
+                    var actionHTML;
+
+                    if (pubsActivesParArticle[a.id]) {
+                        actionHTML = "<span class='badge-promo active'>Publicité en ligne</span>";
+                    } else if (demande && demande.statut === "en_attente") {
+                        actionHTML = "<span class='badge-promo attente'>En attente de validation</span>";
+                    } else {
+                        var messageRefus = (demande && demande.statut === "refusee")
+                            ? "<span class='badge-promo refusee'>Demande refusée</span>"
+                            : "";
+                        actionHTML = messageRefus +
+                            "<button type='button' class='btn-promouvoir' onclick=\"ouvrirPromoArticle('" + a.id + "','" + (a.nom || "").replace(/'/g, "\\'") + "')\">Promouvoir</button>";
+                    }
+
+                    carte.innerHTML =
+                        photoHTML +
+                        "<div class='info'>" +
+                        "<div class='nom'>" + a.nom + "</div>" +
+                        actionHTML +
+                        "</div>";
+
+                    // Photo chargée seulement à l'approche de l'écran (skeleton en attendant)
+                    var imgLazy = carte.querySelector("img");
+                    if (imgLazy && photoPrincipale) {
+                        imgLazy.alt = a.nom || "";
+                        if (window.EsetecLazy) { window.EsetecLazy.watch(imgLazy, photoPrincipale); }
+                        else { imgLazy.src = photoPrincipale; }
+                    }
+
+                    grille.appendChild(carte);
+                });
+            } catch(err) {
+                grille.innerHTML = "<p class='aucun-mes-articles'>❌ Erreur de chargement.</p>";
+                console.error(err);
+            }
+        };
+
+        window.ouvrirPromoArticle = function(id, nom) {
+            articlePourPromo = { id: id, nom: nom };
+            document.getElementById("popup_pub_nom_article").textContent = nom;
+            document.getElementById("msg_pub_demande_err").style.display = "none";
+            document.getElementById("popup_demande_pub").classList.add("actif");
+        };
+
+        window.fermerPopupPub = function() {
+            document.getElementById("popup_demande_pub").classList.remove("actif");
+            articlePourPromo = null;
+        };
+
+        window.envoyerDemandePub = async function() {
+            var erreurEl = document.getElementById("msg_pub_demande_err");
+            erreurEl.style.display = "none";
+
+            if (!articlePourPromo) { return; }
+
+            try {
+                await set(push(ref(db, "demandes_pub")), {
+                    vendeurId:      idVendeurConnecte,
+                    vendeurNom:     vendeurConnecte.nom,
+                    vendeurEmail:   vendeurConnecte.email,
+                    vendeurWhatsapp: vendeurConnecte.whatsapp || "",
+                    articleId:      articlePourPromo.id,
+                    articleNom:     articlePourPromo.nom,
+                    montant:        1500,
+                    duree:          7,
+                    statut:         "en_attente",
+                    date:           new Date().toISOString()
+                });
+
+                // Ouvrir WhatsApp avec les détails, comme pour l'inscription
+                var message =
+                    "Bonjour, je viens de payer pour promouvoir un article sur Esetec Marketplace.\n\n" +
+                    "Nom : " + vendeurConnecte.nom + "\n" +
+                    "Email : " + vendeurConnecte.email + "\n" +
+                    "Article à promouvoir : " + articlePourPromo.nom + "\n\n" +
+                    "La capture d'écran du paiement Wave sera envoyée juste après ce message.";
+                var lien = "https://api.whatsapp.com/send?phone=2250768221911&text=" + encodeURIComponent(message);
+                window.open(lien, "_blank");
+
+                fermerPopupPub();
+                chargerPanneauPublicite();
+            } catch(err) {
+                erreurEl.textContent = "Erreur lors de l'envoi de la demande. Réessayez.";
+                erreurEl.style.display = "block";
+                console.error(err);
+            }
+        };
+
+        // ══════════════════════════════════════
+        // DÉCONNEXION
+        // ══════════════════════════════════════
+        window.deconnecter = function() {
+            vendeurConnecte   = null;
+            idVendeurConnecte = null;
+            effacerSession();
+            if (intervalCompteur) { clearInterval(intervalCompteur); intervalCompteur = null; }
+            arreterEcouteParrainage();
+
+            document.querySelector(".auth-connexion").style.display = "grid";
+            document.getElementById("dashboard_vendeur").style.display = "none";
+
+            document.getElementById("bloc_reinit_mdp").style.display       = "none";
+            document.getElementById("input_email").value                   = "";
+            document.getElementById("input_mdp").value                     = "";
+            document.getElementById("message_erreur").style.display        = "none";
+            document.getElementById("msg_attente").style.display           = "none";
+            document.getElementById("msg_refuse").style.display            = "none";
+            document.getElementById("msg_expire").style.display            = "none";
+            document.getElementById("section_compteur").style.display      = "none";
+            document.getElementById("compteur_abonnement").style.display   = "none";
+            document.getElementById("compteur_abonnement").classList.remove("expire");
+            document.getElementById("grille_mes_articles").innerHTML       = "";
+            document.getElementById("form_article").reset();
+            document.getElementById("msg_article_ok").style.display        = "none";
+            document.getElementById("msg_article_err").style.display       = "none";
+            document.getElementById("btn_publier").disabled                = false;
+            document.getElementById("btn_publier").textContent             = "Publier l'article";
+            basculerOngletDash("articles");
+        };
+
+        // ══════════════════════════════════════
+        // COMPRESSION DES IMAGES AVANT ENVOI
+        // Redimensionne et compresse chaque photo côté navigateur avant de
+        // l'enregistrer dans Firebase, pour que le site n'envoie plus des
+        // photos de plusieurs Mo (directement issues d'un téléphone) : ça
+        // réduit fortement le poids téléchargé par chaque visiteur.
+        // ══════════════════════════════════════
+        function encoderImage(canvas, qualite) {
+            // Compresse en WebP (sinon JPEG) et baisse la qualité jusqu'à ce que l'image
+            // pèse moins d'environ 160 Ko : elle est stockée directement dans Firebase
+            var LIMITE = 220000, q = qualite, r;
+            do {
+                r = canvas.toDataURL("image/webp", q);
+                if (r.indexOf("data:image/webp") !== 0) { r = canvas.toDataURL("image/jpeg", q); }
+                q -= 0.1;
+            } while (r.length > LIMITE && q > 0.25);
+            return r;
+        }
+
+        function compresserImage(fichier, dimensionMax, qualite) {
+            return new Promise(function(resolve, reject) {
+                var lecteur = new FileReader();
+                lecteur.onload = function(e) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var largeur = img.width;
+                        var hauteur = img.height;
+                        if (largeur > dimensionMax || hauteur > dimensionMax) {
+                            if (largeur > hauteur) {
+                                hauteur = Math.round(hauteur * (dimensionMax / largeur));
+                                largeur = dimensionMax;
+                            } else {
+                                largeur = Math.round(largeur * (dimensionMax / hauteur));
+                                hauteur = dimensionMax;
+                            }
+                        }
+                        var canvas = document.createElement("canvas");
+                        canvas.width = largeur;
+                        canvas.height = hauteur;
+                        canvas.getContext("2d").drawImage(img, 0, 0, largeur, hauteur);
+                        resolve(encoderImage(canvas, qualite));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                lecteur.onerror = reject;
+                lecteur.readAsDataURL(fichier);
+            });
+        }
+
+        // ══════════════════════════════════════
+        // SÉLECTION / APERÇU DES PHOTOS (multi)
+        // ══════════════════════════════════════
+        var photosArticleSelectionnees = []; // tableau de dataURL compressées, [0] = photo principale
+
+        window.gererSelectionPhotos = function(evenement) {
+            var fichiers = Array.prototype.slice.call(evenement.target.files);
+            if (fichiers.length === 0) return;
+
+            var lectures = fichiers.map(function(fichier) {
+                return compresserImage(fichier, 800, 0.7);
+            });
+
+            Promise.all(lectures).then(function(dataURLs) {
+                photosArticleSelectionnees = dataURLs;
+                afficherApercuPhotos();
+            });
+        };
+
+        function afficherApercuPhotos() {
+            var conteneur = document.getElementById("apercu_photos");
+            conteneur.innerHTML = "";
+
+            photosArticleSelectionnees.forEach(function(src, index) {
+                var vignette = document.createElement("div");
+                vignette.style.cssText =
+                    "position:relative; width:78px; height:78px; border-radius:10px; overflow:hidden; cursor:pointer;" +
+                    "border:2px solid " + (index === 0 ? "#ff5e00" : "transparent") + ";";
+                vignette.title = index === 0 ? "Photo principale" : "Cliquer pour définir comme photo principale";
+                vignette.onclick = function() { definirPhotoPrincipale(index); };
+
+                vignette.innerHTML =
+                    "<img src='" + src + "' style='width:100%; height:100%; object-fit:cover; display:block;'>" +
+                    (index === 0
+                        ? "<span style='position:absolute; top:3px; left:3px; background:#ff5e00; color:white; font-size:11px; padding:1px 5px; border-radius:6px;'>⭐</span>"
+                        : "");
+
+                conteneur.appendChild(vignette);
+            });
+        }
+
+        function definirPhotoPrincipale(index) {
+            if (index === 0) return;
+            var choisie = photosArticleSelectionnees.splice(index, 1)[0];
+            photosArticleSelectionnees.unshift(choisie);
+            afficherApercuPhotos();
+        }
+
+        // ══════════════════════════════════════
+        // LISTES DE TAILLES / COULEURS CRÉÉES PAR LE VENDEUR
+        // (le vendeur ajoute une valeur à la fois — pointures, tailles
+        // vêtements, tailles écran... tout domaine est possible)
+        // ══════════════════════════════════════
+        var taillesArticleSelectionnees  = [];
+        var couleursArticleSelectionnees = [];
+
+        window.ajouterTaille = function() {
+            ajouterVariante("input_taille", taillesArticleSelectionnees, afficherListeTailles);
+        };
+        window.ajouterCouleur = function() {
+            ajouterVariante("input_couleur", couleursArticleSelectionnees, afficherListeCouleurs);
+        };
+
+        function ajouterVariante(idInput, tableau, fonctionAffichage) {
+            var input  = document.getElementById(idInput);
+            var valeur = input.value.trim();
+            if (!valeur) return;
+            if (tableau.indexOf(valeur) === -1) {
+                tableau.push(valeur);
+                fonctionAffichage();
+            }
+            input.value = "";
+            input.focus();
+        }
+
+        window.retirerTaille = function(index) {
+            taillesArticleSelectionnees.splice(index, 1);
+            afficherListeTailles();
+        };
+        window.retirerCouleur = function(index) {
+            couleursArticleSelectionnees.splice(index, 1);
+            afficherListeCouleurs();
+        };
+
+        function afficherListeTailles() {
+            afficherListeVariante("liste_tailles", taillesArticleSelectionnees, "retirerTaille");
+        }
+        function afficherListeCouleurs() {
+            afficherListeVariante("liste_couleurs", couleursArticleSelectionnees, "retirerCouleur");
+        }
+
+        function afficherListeVariante(idConteneur, tableau, nomFonctionRetrait) {
+            var conteneur = document.getElementById(idConteneur);
+            conteneur.innerHTML = "";
+            tableau.forEach(function(valeur, index) {
+                var puce = document.createElement("span");
+                puce.className = "puce-variante";
+                puce.innerHTML = valeur +
+                    " <button type='button' onclick='" + nomFonctionRetrait + "(" + index + ")' aria-label='Retirer'>✕</button>";
+                conteneur.appendChild(puce);
+            });
+        }
+
+        // ══════════════════════════════════════
+        // PUBLIER ARTICLE
+        // ══════════════════════════════════════
+        window.publierArticle = async function() {
+            if (!vendeurConnecte || (vendeurConnecte.dateExpiration && Date.now() > vendeurConnecte.dateExpiration)) {
+                document.getElementById("msg_article_err").textContent = "⌛ Votre abonnement a expiré.";
+                document.getElementById("msg_article_err").style.display = "block"; return;
+            }
+
+            var nom       = document.getElementById("nom_article").value.trim();
+            var desc      = document.getElementById("desc_article").value.trim();
+            var prix      = document.getElementById("prix_article").value.trim();
+            var stock     = document.getElementById("stock_article").value;
+            var whatsapp  = document.getElementById("whatsapp_article").value.trim();
+            var categorie = document.getElementById("categorie_article").value;
+            var tailles   = taillesArticleSelectionnees.slice();
+            var couleurs  = couleursArticleSelectionnees.slice();
+
+            if (!nom || !desc || !prix || !whatsapp) {
+                alert("Veuillez remplir tous les champs obligatoires (*)."); return;
+            }
+
+            var btn = document.getElementById("btn_publier");
+            btn.textContent = "⏳ Publication..."; btn.disabled = true;
+
+            try {
+                // Photos déjà compressées dans le navigateur : stockées directement dans Firebase
+                var photos = photosArticleSelectionnees.slice();
+                await set(push(ref(db, "articles")), {
+                    nom, description: desc, prix: parseInt(prix),
+                    whatsapp, categorie,
+                    stock:          stock || "disponible",
+                    tailles:        tailles,
+                    couleurs:       couleurs,
+                    photos:         photos,
+                    vendeur:        vendeurConnecte.nom,
+                    vendeurEmail:   vendeurConnecte.email,
+                    vendeurWhatsapp: vendeurConnecte.whatsapp || whatsapp,
+                    dateExpiration: vendeurConnecte.dateExpiration,
+                    date:           new Date().toISOString()
+                });
+                document.getElementById("msg_article_ok").style.display  = "block";
+                document.getElementById("msg_article_err").style.display = "none";
+                document.getElementById("form_article").reset();
+                document.getElementById("whatsapp_article").value = vendeurConnecte.whatsapp || "";
+                document.getElementById("stock_article").value = "disponible";
+                photosArticleSelectionnees = [];
+                taillesArticleSelectionnees = [];
+                couleursArticleSelectionnees = [];
+                afficherListeTailles();
+                afficherListeCouleurs();
+                document.getElementById("apercu_photos").innerHTML = "";
+                chargerMesArticles();
+            } catch(err) {
+                document.getElementById("msg_article_err").textContent = "❌ Erreur lors de la publication.";
+                document.getElementById("msg_article_err").style.display = "block";
+                console.error(err);
+            }
+            btn.textContent = "Publier l'article"; btn.disabled = false;
+        };
+
+        // ══════════════════════════════════════
+        // BASCULER L'ÉTAT DU STOCK D'UN ARTICLE
+        // ══════════════════════════════════════
+        window.basculerStock = async function(idArticle, nouvelEtat) {
+            try {
+                await update(ref(db, "articles/" + idArticle), { stock: nouvelEtat });
+                chargerMesArticles();
+            } catch(err) {
+                alert("Erreur lors de la mise à jour du stock. Réessayez.");
+                console.error(err);
+            }
+        };
+
+        window.supprimerPhotoArticle = async function(idArticle, index) {
+            if (!confirm("Supprimer cette photo définitivement ?")) { return; }
+            try {
+                await supprimerFirebase({ cible: "photo", id: idArticle, index: index,
+                                       vendeurId: idVendeurConnecte, mdp: vendeurConnecte.mdp });
+                chargerMesArticles();
+            } catch(err) {
+                alert("Suppression impossible : " + err.message);
+                console.error(err);
+            }
+        };
+
+        window.supprimerArticle = async function(idArticle, nomArticle) {
+            var confirmation = confirm("Supprimer définitivement \"" + (nomArticle || "cet article") + "\" ?\n\nCette action est irréversible.");
+            if (!confirmation) { return; }
+
+            try {
+                await supprimerFirebase({ cible: "article", id: idArticle, vendeurId: idVendeurConnecte, mdp: vendeurConnecte.mdp });
+                chargerMesArticles();
+            } catch(err) {
+                alert("Erreur lors de la suppression. Réessayez.");
+                console.error(err);
+            }
+        };
+
+    </script>
+
+    <script type="module" src="visites.js" data-role="marchand"></script>
+</body>
+</html>

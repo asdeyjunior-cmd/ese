@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="espace_client.css">
+    <title>Espace Client</title>
+    <script src="loader.js"></script>
+    <script src="lazy-images.js" defer></script>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        .grille-articles {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 700px) {
+            .grille-articles {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .grille-articles {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 22px;
+            }
+        }
+
+        .carte-article {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #ece5df;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 0;
+        }
+
+        .carte-article:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+        }
+
+        .carte-article img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: block;
+        }
+
+        .carte-article .no-photo {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+        }
+
+        .carte-info {
+            padding: 14px;
+        }
+
+        .carte-categorie {
+            font-size: 10.5px;
+            font-weight: bold;
+            color: #ff5e00;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 5px;
+        }
+
+        .carte-nom {
+            font-size: 15px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 5px;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .carte-desc {
+            font-size: 12.5px;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 9px;
+            white-space: pre-line;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .carte-desc.ouverte {
+            display: block;
+            overflow: visible;
+            -webkit-line-clamp: unset;
+        }
+
+        .desc-toggle {
+            display: block;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: -4px 0 9px;
+            color: #ff5e00;
+            font-size: 12.5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .desc-toggle:hover { text-decoration: underline; }
+
+        .carte-prix {
+            font-size: 16px;
+            font-weight: bold;
+            color: #8b2d00;
+            margin-bottom: 10px;
+        }
+
+        .carte-btn {
+            display: block;
+            width: 100%;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            line-height: 1.3;
+        }
+
+        .carte-btn:hover {
+            background: #1da851;
+        }
+
+        /* Petits téléphones : les cartes restent bien lisibles, juste un peu resserrées */
+        @media (max-width: 380px) {
+            .grille-articles { gap: 12px; }
+            .carte-article img,
+            .carte-article .no-photo { height: 120px; }
+            .carte-info { padding: 10px; }
+            .carte-nom { font-size: 13.5px; }
+            .carte-desc { font-size: 11.5px; }
+            .carte-prix { font-size: 14px; }
+        }
+
+        /* CHARGEMENT */
+        .chargement {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 16px;
+        }
+
+        /* BADGE NOMBRE DE PHOTOS */
+        .carte-image {
+            position: relative;
+        }
+
+        .badge-photos {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+
+        /* GALERIE PLEIN ÉCRAN */
+        .galerie-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(10,8,6,0.92);
+            padding: 24px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .galerie-overlay.ouverte {
+            display: flex;
+        }
+
+        .galerie-boite {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .galerie-haut {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+        }
+
+        .galerie-titre {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .galerie-fermer {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .galerie-cadre {
+            position: relative;
+            touch-action: pan-y;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .galerie-cadre img {
+            max-width: 100%;
+            max-height: 62vh;
+            border-radius: 10px;
+            background: #150e0a;
+            object-fit: contain;
+        }
+
+        .galerie-fleche {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.14);
+            color: #fff;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .galerie-precedent { left: -6px; }
+        .galerie-suivant { right: -6px; }
+
+        .galerie-miniatures {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .galerie-miniatures img {
+            width: 54px;
+            height: 54px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            opacity: 0.65;
+        }
+
+        .galerie-miniatures img.active {
+            border-color: #ff5e00;
+            opacity: 1;
+        }
+
+        /* AUCUN ARTICLE */
+        .aucun-article {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+
+        .aucun-article p {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        /* BADGE DE STOCK */
+        .badge-stock-client {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: bold;
+            padding: 3px 9px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+        .badge-stock-client.disponible { background: #e0ffe8; color: #007a2f; }
+        .badge-stock-client.rupture { background: #ffe0e0; color: #cc0000; }
+
+        /* Chip "choix disponibles" sur la carte article */
+        .badge-variantes-client {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: bold;
+            padding: 3px 9px;
+            border-radius: 20px;
+            margin-left: 6px;
+            margin-bottom: 8px;
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        /* Sélecteurs taille / couleur dans la fenêtre de commande */
+        .commande-choix {
+            margin-bottom: 14px;
+        }
+
+        .commande-choix label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: bold;
+            color: #221a15;
+            margin-bottom: 6px;
+        }
+
+        .commande-choix select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-size: 14px;
+            background: #faf9f8;
+            color: #222;
+        }
+
+        .commande-choix select:focus {
+            outline: none;
+            border-color: #ff5e00;
+        }
+
+        /* ═══════════════════════════════════════════════
+           FENÊTRE DE COMMANDE (présentation vendeur + article)
+        ═══════════════════════════════════════════════ */
+        .commande-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 998;
+            background: rgba(10,8,6,0.75);
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .commande-overlay.ouverte {
+            display: flex;
+        }
+
+        .commande-boite {
+            width: 100%;
+            max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+
+        .commande-haut {
+            position: relative;
+        }
+
+        .commande-haut img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            display: block;
+            background: #eee;
+        }
+
+        .commande-haut .no-photo {
+            width: 100%;
+            height: 190px;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        .commande-fermer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .commande-corps {
+            padding: 20px;
+        }
+
+        .commande-nom {
+            font-size: 18px;
+            font-weight: bold;
+            color: #221a15;
+            margin-bottom: 6px;
+        }
+
+        .commande-prix {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8b2d00;
+            margin-bottom: 10px;
+        }
+
+        .commande-desc {
+            font-size: 13.5px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            white-space: pre-line;
+            word-break: break-word;
+        }
+
+        .commande-vendeur {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f6f2ee;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+
+        .commande-vendeur-photo {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #8b2d00;
+        }
+
+        .commande-vendeur-photo-vide {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #8b2d00;
+            color: #fff;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .commande-vendeur-infos .lbl {
+            font-size: 10.5px;
+            color: #8a7d73;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .commande-vendeur-infos .nom-vendeur {
+            font-size: 14.5px;
+            font-weight: bold;
+            color: #221a15;
+        }
+
+        .btn-commander-maintenant {
+            display: block;
+            width: 100%;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-commander-maintenant:hover {
+            background: #1da851;
+        }
+
+        .btn-commander-maintenant.rupture {
+            background: #aaa;
+            pointer-events: none;
+        }
+    </style>
+    <script src="glisser.js"></script>
+</head>
+
+<body>
+
+    <nav class="site-nav">
+        <div class="nav-haut">
+            <a href="espace_client.html" class="nav-logo">
+                <img src="logo.webp" alt="ESETEC Marketplace">
+                <span>ESETEC online <em>Marketplace</em></span>
+            </a>
+            <button type="button" class="nav-burger" id="btn_nav_burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu_principal">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="menu" id="menu_principal">
+                <li><a href="#accueil" data-nav="accueil"><svg class="menu-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="nav-lbl">Accueil</span></a></li>
+                <li><a href="#categories" data-nav="categories"><svg class="menu-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h8"/></svg><span class="nav-lbl">Catégories</span></a></li>
+                <li><a href="#favoris" data-nav="favoris"><svg class="menu-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z"/></svg><span class="nav-lbl">Favoris</span><b class="menu-badge" id="menu-fav-count" hidden>0</b></a></li>
+                <li><a href="espace_vendeur.html" id="nav_espace_vendeur" data-nav-compte><svg class="menu-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="nav-lbl">Compte</span></a></li>
+                <li class="menu-sep" aria-hidden="true"></li>
+                <li class="menu-secondaire"><a href="index.html">À propos</a></li>
+                <li class="menu-secondaire"><a href="https://wa.me/2250100303456" target="_blank" rel="noopener">Service Client</a></li>
+            </ul>
+        </div>
+        <div class="nav-recherche">
+            <form onsubmit="return false;" role="search">
+                <div class="champ-recherche">
+                    <input
+                        type="search"
+                        id="input_recherche"
+                        placeholder="Rechercher un article..."
+                        autocomplete="off"
+                        enterkeyhint="search"
+                        aria-label="Rechercher un article"
+                        oninput="rechercheDynamique()"
+                        onfocus="majSuggestions()"
+                    >
+                </div>
+                <select id="select_categorie" onchange="filtrerArticles()" aria-label="Catégorie">
+                    <option value="">Toutes catégories</option>
+                    <option value="Vêtements">Vêtements</option>
+                    <option value="Accessoires">Accessoires</option>
+                    <option value="Informatique">Informatique</option>
+                    <option value="Fournitures">Fournitures scolaires</option>
+                    <option value="Alimentation">Alimentation</option>
+                    <option value="Plat du jour">Plat du jour</option>
+                    <option value="Électronique">Électronique</option>
+                    <option value="Autre">Autre</option>
+                </select>
+                <button type="button" onclick="lancerRecherche()">Rechercher</button>
+            </form>
+            <div class="suggestions" id="suggestions" role="listbox" hidden></div>
+        </div>
+    </nav>
+
+    <script>
+        (function () {
+            var burger = document.getElementById("btn_nav_burger");
+            var menu = document.getElementById("menu_principal");
+            if (!burger || !menu) { return; }
+
+            function fermerMenu() {
+                menu.classList.remove("menu-ouvert");
+                burger.classList.remove("actif");
+                burger.setAttribute("aria-expanded", "false");
+            }
+
+            burger.addEventListener("click", function (e) {
+                e.stopPropagation();
+                var ouvert = menu.classList.toggle("menu-ouvert");
+                burger.classList.toggle("actif", ouvert);
+                burger.setAttribute("aria-expanded", ouvert ? "true" : "false");
+            });
+
+            menu.querySelectorAll("a").forEach(function (lien) {
+                lien.addEventListener("click", fermerMenu);
+            });
+
+            document.addEventListener("click", function (e) {
+                if (!menu.contains(e.target) && e.target !== burger) { fermerMenu(); }
+            });
+
+            window.addEventListener("resize", function () {
+                if (window.innerWidth > 900) { fermerMenu(); }
+            });
+        })();
+    </script>
+
+    <main>
+
+        <!-- CAROUSEL PUBLICITAIRE -->
+        <section class="pub-carousel" id="pub_carousel" style="display:none;">
+            <div class="pub-slides" id="pub_slides"></div>
+        </section>
+
+        <!-- VENTES FLASH (affichée seulement s'il y a des articles en promotion) -->
+        <section class="flash" id="flash" style="display:none;">
+            <div class="flash-entete">
+                <h2>Ventes Flash | Chaque jour</h2>
+                <a href="#articles" class="flash-fleche">→</a>
+            </div>
+            <div class="flash-timer">⏱ <span id="flash-timer">00h : 00m : 00s</span></div>
+            <div class="flash-liste" id="flash-liste"></div>
+        </section>
+
+        <!-- ARTICLES -->
+        <section id="articles">
+            <div class="articles-entete">
+                <h2 id="titre_articles">Articles disponibles</h2>
+                <div id="compteur"></div>
+            </div>
+            <div class="filtres-bar" id="filtres_bar" role="group" aria-label="Filtrer les articles">
+                <div class="filtre-champ filtre-tri">
+                    <span class="filtre-label">Trier par</span>
+                    <select id="select_tri" onchange="filtrerArticles()" aria-label="Trier">
+                        <option value="pertinence">Récents</option>
+                        <option value="ancien">Anciens</option>
+                        <option value="prix-asc">Prix ↑</option>
+                        <option value="prix-desc">Prix ↓</option>
+                    </select>
+                </div>
+
+                <div class="filtre-champ filtre-prix">
+                    <span class="filtre-label">Prix (FCFA)</span>
+                    <div class="prix-duo">
+                        <input type="number" id="prix_min" placeholder="Min" min="0" inputmode="numeric" oninput="rechercheDynamique()" aria-label="Prix minimum">
+                        <span class="prix-tiret" aria-hidden="true">–</span>
+                        <input type="number" id="prix_max" placeholder="Max" min="0" inputmode="numeric" oninput="rechercheDynamique()" aria-label="Prix maximum">
+                    </div>
+                </div>
+
+                <div class="filtre-actions">
+                    <label class="filtre-stock">
+                        <input type="checkbox" id="filtre_stock" onchange="filtrerArticles()">
+                        <span class="interrupteur" aria-hidden="true"></span>
+                        <span class="st-long">En stock</span><span class="st-court">Stock</span>
+                    </label>
+                    <button type="button" class="filtre-reset" onclick="reinitialiserEtFiltrer()" aria-label="Réinitialiser les filtres" title="Réinitialiser">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><polyline points="3 4 3 10 9 10"></polyline></svg>
+                        <span class="reset-texte">Réinitialiser</span>
+                    </button>
+                </div>
+            </div>
+            <div class="grille-articles" id="grille-articles">
+                <div class="chargement">⏳ Chargement des articles...</div>
+            </div>
+            <div class="indicateur-suite" id="indicateur_suite" hidden>⏳ Chargement des articles suivants…</div>
+        </section>
+
+    </main>
+
+    <!-- FENÊTRE CATÉGORIES -->
+    <div class="cat-overlay" id="cat_overlay" onclick="if(event.target===this) fermerCategories()">
+        <div class="cat-boite">
+            <div class="cat-haut">
+                <h3>Catégories</h3>
+                <button type="button" class="cat-fermer" onclick="fermerCategories()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="cat-grille" id="cat_grille"></div>
+        </div>
+    </div>
+
+    <!-- GALERIE PHOTOS PLEIN ÉCRAN -->
+    <div class="galerie-overlay" id="galerie_overlay" onclick="if(event.target===this) fermerGalerie()">
+        <div class="galerie-boite">
+            <div class="galerie-haut">
+                <span class="galerie-titre" id="galerie_titre"></span>
+                <button type="button" class="galerie-fermer" onclick="fermerGalerie()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="galerie-cadre">
+                <button type="button" class="galerie-fleche galerie-precedent" onclick="naviguerGalerie(-1)" aria-label="Photo précédente">‹</button>
+                <img id="galerie_image_active" src="" alt="">
+                <button type="button" class="galerie-fleche galerie-suivant" onclick="naviguerGalerie(1)" aria-label="Photo suivante">›</button>
+            </div>
+            <div class="galerie-miniatures" id="galerie_miniatures"></div>
+        </div>
+    </div>
+
+    <!-- FENÊTRE DE COMMANDE : présentation vendeur + article -->
+    <div class="commande-overlay" id="commande_overlay" onclick="if(event.target===this) fermerCommande()">
+        <div class="commande-boite">
+            <div class="commande-haut" id="commande_haut"></div>
+            <div class="commande-corps">
+                <div class="commande-nom" id="commande_nom"></div>
+                <div class="commande-prix" id="commande_prix"></div>
+                <span class="badge-stock-client" id="commande_stock"></span>
+                <div class="commande-desc" id="commande_desc"></div>
+                <div id="commande_zone_taille" class="commande-choix" style="display:none;">
+                    <label>Taille</label>
+                    <select id="commande_taille"></select>
+                </div>
+                <div id="commande_zone_couleur" class="commande-choix" style="display:none;">
+                    <label>Couleur</label>
+                    <select id="commande_couleur"></select>
+                </div>
+                <div class="commande-vendeur">
+                    <div id="commande_vendeur_photo"></div>
+                    <div class="commande-vendeur-infos">
+                        <div class="lbl">Vendu par</div>
+                        <div class="nom-vendeur" id="commande_vendeur_nom"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-commander-maintenant" id="commande_lien_whatsapp" onclick="confirmerCommande()">
+                    📲 Commander maintenant
+                </button>
+            </div>
+        </div>
+    </div>
+
+   
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, query, orderByKey, limitToLast, endBefore, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0AD4E1t_YuQLHOgsEOy_wQKZ4l9ycrMo",
+            authDomain: "esetec-marketplace.firebaseapp.com",
+            projectId: "esetec-marketplace",
+            storageBucket: "esetec-marketplace.firebasestorage.app",
+            messagingSenderId: "480104714016",
+            appId: "1:480104714016:web:c8b923f80c103701385145",
+            databaseURL: "https://esetec-marketplace-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getDatabase(app);
+
+        // Stocke tous les articles pour la recherche
+        var tousLesArticles = [];
+        var categorieUrlAppliquee = false;
+
+        // Stocke les infos vendeurs (photo, etc.) par email, pour la fenêtre de commande
+        var vendeursParEmail = {};
+        // Article actuellement affiché dans la fenêtre de commande
+        var articleCommandeActuel = null;
+        // Les vendeurs (et leurs photos) ne sont téléchargés qu'à la première ouverture d'une fiche article
+        var vendeursDemandes = false;
+        function demarrerEcouteVendeurs() {
+            if (vendeursDemandes) return;
+            vendeursDemandes = true;
+            onValue(ref(db, "vendeurs"), function(snapshot) {
+                vendeursParEmail = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach(function(enfant) {
+                        var v = enfant.val();
+                        var cle = (v.email || "").trim().toLowerCase();
+                        if (cle) vendeursParEmail[cle] = v;
+                    });
+                }
+                // La fiche est peut-être déjà ouverte : on met la photo à jour
+                var fiche = document.getElementById("commande_overlay");
+                if (articleCommandeActuel && fiche && fiche.classList.contains("ouverte")) {
+                    remplirPhotoVendeur(articleCommandeActuel);
+                }
+            });
+        }
+
+        function remplirPhotoVendeur(article) {
+            var vendeurInfo = vendeursParEmail[(article.vendeurEmail || "").trim().toLowerCase()];
+            var zonePhotoVendeur = document.getElementById("commande_vendeur_photo");
+            if (vendeurInfo && vendeurInfo.photo) {
+                zonePhotoVendeur.innerHTML = "<img src='" + vendeurInfo.photo + "' class='commande-vendeur-photo' alt='" + esc(article.vendeur || "") + "'>";
+            } else {
+                zonePhotoVendeur.innerHTML = "<div class='commande-vendeur-photo-vide'>" +
+                    esc((article.vendeur || "?").trim().charAt(0).toUpperCase()) + "</div>";
+            }
+        }
+
+        // ══════════════════════════════════════
+        // CHARGEMENT PROGRESSIF DES ARTICLES
+        // Les photos sont stockées dans les articles : on télécharge donc
+        // 12 articles au départ, puis 12 de plus à chaque fois que le visiteur
+        // approche du bas de la liste. Tout n'est téléchargé que si une
+        // recherche, un filtre, un tri ou les favoris en ont besoin.
+        // ══════════════════════════════════════
+        // Connexion lente ou économie de données : lots plus petits, moins d'animations
+        var RESEAU_LENT = !!(window.EsetecLazy && window.EsetecLazy.reseauLent);
+
+        // Chargement différé des images (Intersection Observer, voir lazy-images.js).
+        // Si le fichier est absent, l'image s'affiche normalement : rien ne casse.
+        function lazyWatch(img, source, options) {
+            if (!img) return;
+            if (window.EsetecLazy) { window.EsetecLazy.watch(img, source, options); }
+            else { img.src = (typeof source === "function") ? source() : source; }
+        }
+        function lazyRelease(conteneur) {
+            if (window.EsetecLazy) window.EsetecLazy.release(conteneur);
+        }
+
+        var articlesRef = ref(db, "articles");
+        var TAILLE_PAGE = RESEAU_LENT ? 6 : 12;
+        var articlesParId = {};          // tous les articles déjà téléchargés
+        var articlesFenetre = {};        // les plus récents, suivis en direct
+        var plusAnciennesCle = null;     // clé du plus ancien article téléchargé
+        var toutEstCharge = false;       // true quand il n'y a plus rien à télécharger
+        var premierChargement = true;
+        var dejaRendu = false;
+        var conserverAffichage = false;
+        var promesseTout = null;
+        var suiteEnCours = false;
+
+        function reconstruireListe() {
+            // Les clés Firebase sont classées par date : on trie du plus récent au plus ancien
+            tousLesArticles = Object.keys(articlesParId).sort().reverse().map(function(k) {
+                return articlesParId[k];
+            });
+        }
+
+        function rafraichirListe() {
+            reconstruireListe();
+            vocabulaire = null;
+            if (!categorieUrlAppliquee) {
+                appliquerCategorieDepuisURL();
+                categorieUrlAppliquee = true;
+            }
+            afficherFlash(tousLesArticles);
+            conserverAffichage = dejaRendu;   // mise à jour en direct : on garde la position dans la liste
+            filtrerArticles();
+            dejaRendu = true;
+            majBadgesFavoris();
+        }
+
+        // Télécharge des articles plus anciens ("limite" = nombre, 0 = tous les restants)
+        function chargerPageAnciens(limite) {
+            if (!plusAnciennesCle) return Promise.resolve(0);
+            var q = limite
+                ? query(articlesRef, orderByKey(), endBefore(plusAnciennesCle), limitToLast(limite))
+                : query(articlesRef, orderByKey(), endBefore(plusAnciennesCle));
+            return get(q).then(function(snap) {
+                var n = 0, min = null;
+                snap.forEach(function(enfant) {
+                    var a = enfant.val();
+                    if (!a || typeof a !== "object") return;
+                    a.id = enfant.key;
+                    articlesParId[enfant.key] = a;
+                    n++;
+                    if (min === null) min = enfant.key;
+                });
+                if (min !== null && (plusAnciennesCle === null || min < plusAnciennesCle)) plusAnciennesCle = min;
+                if (!limite || n < limite) toutEstCharge = true;
+                return n;
+            });
+        }
+
+        // Page suivante, déclenchée quand le visiteur arrive en bas de la liste
+        function chargerSuite() {
+            if (suiteEnCours || toutEstCharge) return;
+            suiteEnCours = true;
+            var indicateur = document.getElementById("indicateur_suite");
+            if (indicateur) indicateur.hidden = false;
+
+            chargerPageAnciens(TAILLE_PAGE).then(function() {
+                suiteEnCours = false;
+                if (indicateur) indicateur.hidden = true;
+                reconstruireListe();
+                vocabulaire = null;
+                afficherFlash(tousLesArticles);
+                if (rechercheActive) return;   // une recherche a démarré entre-temps : elle chargera tout
+                articlesFiltresActuels = tousLesArticles;
+                majCompteur();
+                if (nombreArticlesAffiches < articlesFiltresActuels.length) { chargerLotSuivant(); }
+                else if (observateurChargement) { observateurChargement.disconnect(); }
+            }).catch(function(err) {
+                console.error(err);
+                suiteEnCours = false;
+                if (indicateur) indicateur.hidden = true;
+            });
+        }
+
+        // Tout télécharger (recherche, filtres, tri, favoris)
+        function chargerTout() {
+            if (toutEstCharge) return Promise.resolve();
+            if (promesseTout) return promesseTout;
+            promesseTout = chargerPageAnciens(0).then(function() {
+                promesseTout = null;
+                reconstruireListe();
+                vocabulaire = null;
+                afficherFlash(tousLesArticles);
+                majBadgesFavoris();
+                filtrerArticles();
+                var champ = el("input_recherche");
+                if (champ && document.activeElement === champ) window.majSuggestions();
+            }).catch(function(err) {
+                console.error(err);
+                promesseTout = null;
+                var g = el("grille-articles");
+                if (g) {
+                    g.innerHTML = "<div class='aucun-article' style='grid-column:1/-1;'><div style='font-size:48px;'>📡</div>" +
+                        "<p>Impossible de charger tous les articles.<br>Vérifiez votre connexion puis réessayez.</p>" +
+                        "<button type='button' class='btn-vide' data-action='reset'>Réessayer</button></div>";
+                }
+            });
+            return promesseTout;
+        }
+
+        // Écoute en direct les 12 articles les plus récents (les nouveautés apparaissent toutes seules)
+        onValue(query(articlesRef, orderByKey(), limitToLast(TAILLE_PAGE)), function(snapshot) {
+            var recus = {}, cles = [];
+            snapshot.forEach(function(enfant) {
+                var a = enfant.val();
+                if (!a || typeof a !== "object") return;
+                a.id = enfant.key;
+                recus[enfant.key] = a;
+                cles.push(enfant.key);
+            });
+            var cleMin = cles.length ? cles[0] : null;
+            var fenetrePleine = cles.length >= TAILLE_PAGE;
+
+            // Article supprimé par son vendeur : on le retire de la liste
+            Object.keys(articlesFenetre).forEach(function(k) {
+                if (!(k in recus) && (!fenetrePleine || k > cleMin)) delete articlesParId[k];
+            });
+            articlesFenetre = recus;
+            cles.forEach(function(k) { articlesParId[k] = recus[k]; });
+
+            if (premierChargement) {
+                premierChargement = false;
+                plusAnciennesCle = cleMin;
+                if (!fenetrePleine) toutEstCharge = true;
+            }
+            rafraichirListe();
+        }, function(err) {
+            console.error(err);
+            var g = document.getElementById("grille-articles");
+            if (g && premierChargement) {
+                g.innerHTML = "<div class='aucun-article' style='grid-column:1/-1;'><div style='font-size:48px;'>📡</div>" +
+                    "<p>Impossible de charger les articles.<br>Vérifiez votre connexion et rechargez la page.</p></div>";
+            }
+        });
+
+        // ══════════════════════════════════════
+        // VENTES FLASH : articles dont "prixAncien" est supérieur à "prix"
+        // ══════════════════════════════════════
+        function afficherFlash(articles) {
+            var section = document.getElementById("flash");
+            var liste = document.getElementById("flash-liste");
+            if (!section || !liste) { return; }
+
+            var promos = articles.filter(function(a) {
+                return Number(a.prixAncien) > Number(a.prix) && Number(a.prix) > 0 && a.stock !== "rupture";
+            });
+
+            lazyRelease(liste);
+            liste.innerHTML = "";
+            flashDispo = promos.length > 0;
+            if (!flashDispo) { section.style.display = "none"; return; }
+
+            promos.forEach(function(a) {
+                var photos = (a.photos && a.photos.length) ? a.photos : (a.photo ? [a.photo] : []);
+                var carte = document.createElement("div");
+                carte.className = "flash-carte";
+
+                if (photos[0]) {
+                    var img = document.createElement("img");
+                    img.alt = a.nom || "";
+                    carte.appendChild(img);
+                    lazyWatch(img, photos[0], { root: liste });
+                } else {
+                    var vide = document.createElement("div");
+                    vide.className = "flash-sans-photo";
+                    carte.appendChild(vide);
+                }
+
+                var stock = document.createElement("div");
+                stock.className = "flash-stock";
+                stock.textContent = "Disponible";
+                carte.appendChild(stock);
+
+                var infos = document.createElement("div");
+                infos.className = "flash-infos";
+
+                var titre = document.createElement("h3");
+                titre.textContent = a.nom || "";
+                infos.appendChild(titre);
+
+                var prix = document.createElement("div");
+                prix.className = "flash-prix";
+                prix.textContent = parseInt(a.prix).toLocaleString("fr-FR") + " FCFA";
+                infos.appendChild(prix);
+
+                var ancien = document.createElement("div");
+                ancien.className = "flash-ancien";
+                var barre = document.createElement("s");
+                barre.textContent = parseInt(a.prixAncien).toLocaleString("fr-FR") + " FCFA";
+                var badge = document.createElement("span");
+                badge.className = "flash-badge";
+                badge.textContent = "-" + Math.round((1 - Number(a.prix) / Number(a.prixAncien)) * 100) + "%";
+                ancien.appendChild(barre);
+                ancien.appendChild(badge);
+                infos.appendChild(ancien);
+
+                carte.appendChild(infos);
+                carte.addEventListener("click", function() { window.ouvrirCommande(a.id); });
+                liste.appendChild(carte);
+            });
+
+            section.style.display = rechercheActive ? "none" : "";
+        }
+
+        // ══════════════════════════════════════
+        // CAROUSEL PUBLICITAIRE (géré depuis l'espace admin)
+        // ══════════════════════════════════════
+        var toutesLesPubs = [];
+        var pubCourante = 0;
+        var pubIndexAffiche = null;
+        var minuteurPub = null;
+        var rechercheActive = false;
+
+        onValue(ref(db, "publicites"), function(snapshot) {
+            var liste = [];
+            if (snapshot.exists()) {
+                snapshot.forEach(function(enfant) {
+                    var p = enfant.val();
+                    p.id = enfant.key;
+                    if (p.actif !== false) liste.push(p);
+                });
+                liste.sort(function(a, b) { return (a.ordre || 0) - (b.ordre || 0); });
+            }
+            toutesLesPubs = liste;
+            afficherPubs();
+        });
+
+        function afficherPubs() {
+            var conteneurSlides = document.getElementById("pub_slides");
+
+            conteneurSlides.innerHTML = "";
+
+            if (toutesLesPubs.length === 0) {
+                pubCourante = 0;
+                pubIndexAffiche = null;
+                miseAJourAffichagePub();
+                return;
+            }
+
+            toutesLesPubs.forEach(function(pub, index) {
+                var slide = document.createElement("div");
+                slide.className = "pub-slide";
+                if (index === 0) { slide.style.backgroundImage = "url('" + pub.image + "')"; }
+                slide.onclick = function() {
+                    if (pub.idArticle) {
+                        window.ouvrirCommande(pub.idArticle);
+                    } else if (pub.lien) {
+                        window.open(pub.lien, "_blank");
+                    }
+                };
+
+                if (pub.titre || pub.texte) {
+                    var legende = document.createElement("div");
+                    legende.className = "pub-legende";
+                    legende.innerHTML =
+                        (pub.titre ? "<div class='pub-titre'>" + pub.titre + "</div>" : "") +
+                        (pub.texte ? "<div class='pub-texte'>" + pub.texte + "</div>" : "");
+                    slide.appendChild(legende);
+                }
+
+                conteneurSlides.appendChild(slide);
+
+            });
+
+            pubCourante = 0;
+            pubIndexAffiche = null;
+            afficherPubCourante();
+            miseAJourAffichagePub();
+        }
+
+        // Positionne une slide : 'gauche' (-100%), 'centre' (0%) ou 'droite' (100%)
+        function positionnerPubSlide(slide, position, sansTransition) {
+            if (!slide) return;
+            var valeurs = { gauche: "-100%", centre: "0%", droite: "100%" };
+            if (sansTransition) {
+                slide.style.transition = "none";
+                slide.style.transform = "translateX(" + valeurs[position] + ")";
+                void slide.offsetHeight; // force le reflow avant de réactiver la transition
+                slide.style.transition = "";
+            } else {
+                slide.style.transform = "translateX(" + valeurs[position] + ")";
+            }
+        }
+
+        // Affiche la publicité courante avec un glissement horizontal.
+        // direction "avant" : l'ancienne glisse à gauche, la nouvelle entre par la droite.
+        // direction "arriere" : l'ancienne glisse à droite, la nouvelle entre par la gauche.
+        // Pose l'image d'une publicité seulement quand elle va être affichée (la suivante est préparée à l'avance)
+        function chargerFondPub(i) {
+            var slide = document.querySelectorAll("#pub_slides .pub-slide")[i];
+            var pub = toutesLesPubs[i];
+            if (slide && pub && !slide.style.backgroundImage) {
+                slide.style.backgroundImage = "url('" + pub.image + "')";
+            }
+        }
+
+        function afficherPubCourante(direction) {
+            var slides = document.querySelectorAll("#pub_slides .pub-slide");
+
+            chargerFondPub(pubCourante);
+            if (slides.length > 1) { chargerFondPub((pubCourante + 1) % slides.length); }
+
+            if (pubIndexAffiche === null) {
+                // Premier affichage : pas d'animation, tout se place directement
+                slides.forEach(function(s, i) {
+                    positionnerPubSlide(s, i === pubCourante ? "centre" : "droite", true);
+                });
+                pubIndexAffiche = pubCourante;
+                return;
+            }
+
+            if (pubIndexAffiche === pubCourante) { return; }
+
+            var slideSortante = slides[pubIndexAffiche];
+            var slideEntrante = slides[pubCourante];
+            var sens = direction === "arriere" ? "arriere" : "avant";
+
+            if (sens === "arriere") {
+                positionnerPubSlide(slideEntrante, "gauche", true);
+                positionnerPubSlide(slideSortante, "droite");
+                positionnerPubSlide(slideEntrante, "centre");
+            } else {
+                positionnerPubSlide(slideEntrante, "droite", true);
+                positionnerPubSlide(slideSortante, "gauche");
+                positionnerPubSlide(slideEntrante, "centre");
+            }
+
+            // Les slides non concernées restent prêtes à droite pour un futur passage
+            slides.forEach(function(s, i) {
+                if (i !== pubIndexAffiche && i !== pubCourante) {
+                    positionnerPubSlide(s, "droite", true);
+                }
+            });
+
+            pubIndexAffiche = pubCourante;
+        }
+
+        function planifierPub() {
+            if (minuteurPub) { clearInterval(minuteurPub); minuteurPub = null; }
+            if (rechercheActive || toutesLesPubs.length <= 1) { return; }
+            minuteurPub = setInterval(function() {
+                pubCourante = (pubCourante + 1) % toutesLesPubs.length;
+                afficherPubCourante("avant");
+            }, 5000);
+        }
+
+        function allerAPub(index, direction) {
+            var ancien = pubCourante;
+            var nouveau = (index + toutesLesPubs.length) % toutesLesPubs.length;
+            if (!direction) {
+                direction = (nouveau > ancien) ? "avant" : "arriere";
+            }
+            pubCourante = nouveau;
+            afficherPubCourante(direction);
+            planifierPub();
+        }
+
+        // Affiche ou masque la bannière pub selon qu'une recherche est active ou non
+        function miseAJourAffichagePub() {
+            var section = document.getElementById("pub_carousel");
+            if (!section) return;
+
+            if (rechercheActive || toutesLesPubs.length === 0) {
+                section.style.display = "none";
+                if (minuteurPub) { clearInterval(minuteurPub); minuteurPub = null; }
+            } else {
+                section.style.display = "block";
+                planifierPub();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Glisser (doigt, souris ou trackpad) pour changer de publicité : remplace les boutons
+            var banniere = document.getElementById("pub_carousel");
+            if (banniere && window.EsetecSwipe) {
+                EsetecSwipe(banniere, {
+                    onPrev: function() { allerAPub(pubCourante - 1, "arriere"); },
+                    onNext: function() { allerAPub(pubCourante + 1, "avant"); },
+                    onStart: function() { if (minuteurPub) { clearInterval(minuteurPub); minuteurPub = null; } },
+                    onEnd: function() { planifierPub(); }
+                });
+            }
+
+            // Glisser dans la galerie photos pour passer à la photo suivante / précédente
+            var cadreGalerie = document.querySelector(".galerie-cadre");
+            if (cadreGalerie && window.EsetecSwipe) {
+                EsetecSwipe(cadreGalerie, {
+                    onPrev: function() { naviguerGalerie(-1); },
+                    onNext: function() { naviguerGalerie(1); }
+                });
+            }
+        });
+
+        // Pré-sélectionne la catégorie si elle est passée dans l'URL (ex: ?categorie=Informatique)
+        function appliquerCategorieDepuisURL() {
+            var params = new URLSearchParams(window.location.search);
+            var categorie = params.get("categorie");
+            if (categorie) {
+                var sel = document.getElementById("select_categorie");
+                sel.value = categorie;
+                if (sel.value !== categorie) {   // catégorie créée par l'admin, pas encore dans la liste
+                    sel.appendChild(new Option(categorie, categorie));
+                    sel.value = categorie;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // ══════════════════════════════════════
+        // AFFICHAGE PROGRESSIF DE LA GRILLE
+        // On ne construit qu'un petit lot de cartes (donc de photos) au départ,
+        // puis on ajoute le lot suivant seulement quand l'utilisateur approche
+        // du bas de la grille : les photos se chargent au fur et à mesure
+        // qu'il les découvre, au lieu que tout arrive d'un coup.
+        // ══════════════════════════════════════
+        var TAILLE_LOT = RESEAU_LENT ? 6 : 12;
+        var articlesFiltresActuels = [];
+        var nombreArticlesAffiches = 0;
+        var sentinelleChargement = null;
+        var observateurChargement = null;
+
+        function creerCarteArticle(article, racineLazy) {
+            var carte = document.createElement("div");
+            carte.className = "carte-article";
+
+            var photos = (article.photos && article.photos.length) ? article.photos : (article.photo ? [article.photo] : []);
+            var photoPrincipale = photos[0];
+
+            var photoHTML = photoPrincipale
+                ? "<div class='carte-image'><img alt='" + esc(article.nom) + "'>" +
+                  (photos.length > 1 ? "<span class='badge-photos'>📷 " + photos.length + "</span>" : "") +
+                  "</div>"
+                : "<div class='no-photo'></div>";
+
+            var prixFormate = article.prix
+                ? parseInt(article.prix).toLocaleString("fr-FR") + " FCFA"
+                : "Prix non défini";
+
+            var enRupture = article.stock === "rupture";
+            var badgeStockHTML = enRupture
+                ? "<span class='badge-stock-client rupture'> Rupture de stock</span>"
+                : "<span class='badge-stock-client disponible'> Disponible</span>";
+
+            var aDesVariantes = (article.tailles && article.tailles.length) || (article.couleurs && article.couleurs.length);
+            var badgeVariantesHTML = aDesVariantes
+                ? "<span class='badge-variantes-client'> Choix disponibles</span>"
+                : "";
+
+            carte.innerHTML =
+                boutonFavoriHTML(article.id, false) +
+                photoHTML +
+                "<div class='carte-info'>" +
+                "<div class='carte-categorie'>" + esc(article.categorie || "Autre") + "</div>" +
+                "<div class='carte-nom'>" + surligner(article.nom) + "</div>" +
+                "<div class='carte-desc'>" + surligner(article.description || "") + "</div>" +
+                "<button type='button' class='desc-toggle' hidden>Voir plus</button>" +
+                "<div class='carte-prix'>" + prixFormate + "</div>" +
+                badgeStockHTML + badgeVariantesHTML +
+                "<button type='button' class='carte-btn' onclick=\"ouvrirCommande('" + esc(article.id) + "')\">" +
+                " Commander</button>" +
+                "</div>";
+
+            // La photo n'est chargée que lorsque la carte approche de l'écran (skeleton en attendant)
+            lazyWatch(carte.querySelector(".carte-image img"), photoPrincipale, racineLazy ? { root: racineLazy } : undefined);
+
+            if (photos.length > 0) {
+                var zoneImage = carte.querySelector(".carte-image, .no-photo");
+                zoneImage.style.cursor = "pointer";
+                zoneImage.addEventListener("click", function() {
+                    ouvrirGalerie(photos, article.nom);
+                });
+            }
+
+            return carte;
+        }
+
+        function sentinelleProche() {
+            return !!(sentinelleChargement && sentinelleChargement.isConnected &&
+                      sentinelleChargement.getBoundingClientRect().top < window.innerHeight + 400);
+        }
+
+        function majCompteur() {
+            var compteur = document.getElementById("compteur");
+            if (!compteur) return;
+            // Affiché seulement quand une catégorie précise est choisie (pas sur « Toutes catégories »)
+            var selCategorie = document.getElementById("select_categorie");
+            var categorieChoisie = selCategorie ? selCategorie.value : "";
+            compteur.textContent = categorieChoisie
+                ? articlesFiltresActuels.length + (toutEstCharge ? "" : "+") + " article(s) trouvé(s)"
+                : "";
+        }
+
+        // Ajoute le prochain lot de cartes juste avant la sentinelle.
+        // Les cartes apparaissent une par une ; quand tout ce qui est en mémoire est affiché,
+        // la suite est téléchargée (seulement si le visiteur est arrivé jusque-là).
+        function chargerLotSuivant(nombre, sansAnimation) {
+            var grille = document.getElementById("grille-articles");
+            if (!sentinelleChargement || !sentinelleChargement.parentNode) return;
+            var prochain = articlesFiltresActuels.slice(nombreArticlesAffiches, nombreArticlesAffiches + (nombre || TAILLE_LOT));
+
+            prochain.forEach(function(article, k) {
+                var carte = creerCarteArticle(article);
+                if (!sansAnimation && !RESEAU_LENT) {
+                    carte.style.setProperty("--i", k % TAILLE_LOT);
+                    carte.classList.add("apparait");
+                }
+                grille.insertBefore(carte, sentinelleChargement);
+            });
+
+            nombreArticlesAffiches += prochain.length;
+
+            if (nombreArticlesAffiches >= articlesFiltresActuels.length && toutEstCharge) {
+                if (observateurChargement) { observateurChargement.disconnect(); }   // tout est affiché
+                return;
+            }
+
+            // Le bas de la liste est déjà proche de l'écran (écran pas rempli) : on continue.
+            // Sinon on attend que le visiteur descende : rien n'est téléchargé en avance.
+            setTimeout(function() { if (sentinelleProche()) demanderPlus(); }, 120);
+        }
+
+        // Appelé quand le visiteur arrive près du bas de la liste :
+        // affiche d'abord ce qui est déjà en mémoire, sinon télécharge la page suivante.
+        function demanderPlus() {
+            if (nombreArticlesAffiches < articlesFiltresActuels.length) { chargerLotSuivant(); }
+            else if (!toutEstCharge) { chargerSuite(); }
+            else if (observateurChargement) { observateurChargement.disconnect(); }
+        }
+
+        function initSentinelleChargement() {
+            var grille = document.getElementById("grille-articles");
+
+            sentinelleChargement = document.createElement("div");
+            sentinelleChargement.className = "sentinelle-chargement";
+            sentinelleChargement.style.cssText = "grid-column:1/-1; height:1px;";
+            grille.appendChild(sentinelleChargement);
+
+            if (observateurChargement) observateurChargement.disconnect();
+
+            if ("IntersectionObserver" in window) {
+                observateurChargement = new IntersectionObserver(function(entrees) {
+                    entrees.forEach(function(entree) {
+                        if (entree.isIntersecting) demanderPlus();
+                    });
+                }, { rootMargin: RESEAU_LENT ? "200px" : "300px" });
+                observateurChargement.observe(sentinelleChargement);
+            } else {
+                // Navigateur sans IntersectionObserver : on affiche tout ce qui est en mémoire
+                chargerLotSuivant(articlesFiltresActuels.length);
+            }
+        }
+
+        // Afficher les articles dans la grille (remplace le contenu et repart du haut)
+        function afficherArticles(articles, videHtml) {
+            var grille = document.getElementById("grille-articles");
+            var compteur = document.getElementById("compteur");
+
+            var aConserver = conserverAffichage ? Math.max(TAILLE_LOT, nombreArticlesAffiches) : TAILLE_LOT;
+            var sansAnimation = conserverAffichage;
+            conserverAffichage = false;
+
+            if (observateurChargement) observateurChargement.disconnect();
+            lazyRelease(grille);
+
+            if (articles.length === 0) {
+                grille.innerHTML = videHtml ||
+                    "<div class='aucun-article' style='grid-column:1/-1;'>" +
+                    "<div style='font-size:48px;'>🛒</div>" +
+                    "<p>Aucun article disponible pour le moment.<br>" +
+                    "Revenez bientôt !</p></div>";
+                compteur.textContent = "";
+                articlesFiltresActuels = [];
+                nombreArticlesAffiches = 0;
+                return;
+            }
+
+            grille.innerHTML = "";
+            articlesFiltresActuels = articles;
+            nombreArticlesAffiches = 0;
+            majCompteur();
+
+            initSentinelleChargement();
+            chargerLotSuivant(aConserver, sansAnimation);
+        }
+
+        // ══════════════════════════════════════
+        // GALERIE PHOTOS PLEIN ÉCRAN
+        // ══════════════════════════════════════
+        var galeriePhotosActuelles = [];
+        var galerieIndexActuel = 0;
+
+        window.ouvrirGalerie = function(photos, nomArticle) {
+            galeriePhotosActuelles = photos;
+            galerieIndexActuel = 0;
+            document.getElementById("galerie_titre").textContent = nomArticle;
+            afficherPhotoGalerie();
+            document.getElementById("galerie_overlay").classList.add("ouverte");
+        };
+
+        window.fermerGalerie = function() {
+            document.getElementById("galerie_overlay").classList.remove("ouverte");
+        };
+
+        window.naviguerGalerie = function(delta) {
+            var total = galeriePhotosActuelles.length;
+            galerieIndexActuel = (galerieIndexActuel + delta + total) % total;
+            afficherPhotoGalerie();
+        };
+
+        function afficherPhotoGalerie() {
+            document.getElementById("galerie_image_active").src = galeriePhotosActuelles[galerieIndexActuel];
+
+            var miniatures = document.getElementById("galerie_miniatures");
+            miniatures.innerHTML = "";
+            miniatures.style.display = galeriePhotosActuelles.length > 1 ? "flex" : "none";
+
+            galeriePhotosActuelles.forEach(function(src, index) {
+                var mini = document.createElement("img");
+                mini.src = src;
+                mini.className = index === galerieIndexActuel ? "active" : "";
+                mini.onclick = function() { galerieIndexActuel = index; afficherPhotoGalerie(); };
+                miniatures.appendChild(mini);
+            });
+        }
+
+        document.addEventListener("keydown", function(e) {
+            if (!document.getElementById("galerie_overlay").classList.contains("ouverte")) return;
+            if (e.key === "Escape") fermerGalerie();
+            if (e.key === "ArrowLeft") naviguerGalerie(-1);
+            if (e.key === "ArrowRight") naviguerGalerie(1);
+        });
+
+        // ══════════════════════════════════════
+        // FENÊTRE DE COMMANDE : présentation vendeur + article,
+        // avec bouton final vers WhatsApp
+        // ══════════════════════════════════════
+        window.ouvrirCommande = function(idArticle) {
+            var article = tousLesArticles.filter(function(a){ return a.id === idArticle; })[0];
+            if (!article) return;
+
+            articleCommandeActuel = article;
+
+            var photos = (article.photos && article.photos.length) ? article.photos : (article.photo ? [article.photo] : []);
+            var photoPrincipale = photos[0];
+
+            document.getElementById("commande_haut").innerHTML = photoPrincipale
+                ? "<img src='" + photoPrincipale + "' alt='" + article.nom + "'>" +
+                  "<button type='button' class='commande-fermer' onclick='fermerCommande()' aria-label='Fermer'>✕</button>"
+                : "<div class='no-photo'>📦</div>" +
+                  "<button type='button' class='commande-fermer' onclick='fermerCommande()' aria-label='Fermer'>✕</button>";
+
+            document.getElementById("commande_haut").insertAdjacentHTML("beforeend", boutonFavoriHTML(article.id, true));
+            noterAffinite(article.categorie, 1);
+
+            document.getElementById("commande_nom").textContent = article.nom;
+
+            var prixFormate = article.prix
+                ? parseInt(article.prix).toLocaleString("fr-FR") + " FCFA"
+                : "Prix non défini";
+            document.getElementById("commande_prix").textContent = prixFormate;
+
+            var enRupture = article.stock === "rupture";
+            var badgeStock = document.getElementById("commande_stock");
+            badgeStock.textContent = enRupture ? " Rupture de stock" : " Disponible";
+            badgeStock.className = "badge-stock-client " + (enRupture ? "rupture" : "disponible");
+
+            document.getElementById("commande_desc").textContent = article.description || "";
+
+            // Listes déroulantes taille / couleur (affichées seulement si le vendeur les a renseignées)
+            remplirListeChoix("commande_zone_taille", "commande_taille", article.tailles);
+            remplirListeChoix("commande_zone_couleur", "commande_couleur", article.couleurs);
+
+            // Infos vendeur (photo si disponible)
+            remplirPhotoVendeur(article);
+            demarrerEcouteVendeurs();
+            document.getElementById("commande_vendeur_nom").textContent = article.vendeur || "Vendeur ESETEC";
+
+            var btnCommander = document.getElementById("commande_lien_whatsapp");
+            btnCommander.textContent = enRupture ? " Article en rupture de stock" : " Commander maintenant";
+
+            document.getElementById("commande_overlay").classList.add("ouverte");
+        };
+
+        // Remplit un <select> avec une liste de valeurs, et cache le bloc si la liste est vide
+        function remplirListeChoix(idZone, idSelect, valeurs) {
+            var zone = document.getElementById(idZone);
+            var select = document.getElementById(idSelect);
+            if (!valeurs || valeurs.length === 0) {
+                zone.style.display = "none";
+                select.innerHTML = "";
+                return;
+            }
+            zone.style.display = "block";
+            select.innerHTML = valeurs.map(function(v) {
+                return "<option value='" + v + "'>" + v + "</option>";
+            }).join("");
+        }
+
+        // Construit le message WhatsApp (avec la taille/couleur choisies) et ouvre WhatsApp
+        window.confirmerCommande = function() {
+            var article = articleCommandeActuel;
+            if (!article) return;
+
+            var prixFormate = article.prix
+                ? parseInt(article.prix).toLocaleString("fr-FR") + " FCFA"
+                : "Prix non défini";
+
+            var precisions = "";
+            var selectTaille  = document.getElementById("commande_taille");
+            var selectCouleur = document.getElementById("commande_couleur");
+            if (article.tailles && article.tailles.length) {
+                precisions += "\nTaille souhaitée : " + selectTaille.value;
+            }
+            if (article.couleurs && article.couleurs.length) {
+                precisions += "\nCouleur souhaitée : " + selectCouleur.value;
+            }
+
+            var msgWhatsApp =
+                "Bonjour, je suis intéressé(e) par votre article *" + article.nom +
+                "* (" + prixFormate + ") affiché sur ESETEC Marketplace." +
+                precisions +
+                "\nEst-il encore disponible ?";
+
+            var lienWhatsApp = "https://api.whatsapp.com/send?phone=" +
+                (article.whatsapp || "").replace(/[^0-9]/g, "") +
+                "&text=" + encodeURIComponent(msgWhatsApp);
+
+            window.open(lienWhatsApp, "_blank");
+        };
+
+        window.fermerCommande = function() {
+            document.getElementById("commande_overlay").classList.remove("ouverte");
+        };
+
+        document.addEventListener("keydown", function(e) {
+            if (!document.getElementById("commande_overlay").classList.contains("ouverte")) return;
+            if (e.key === "Escape") fermerCommande();
+        });
+
+        // ══════════════════════════════════════════════════════════
+        // OUTILS : texte, stockage local, favoris, personnalisation
+        // ══════════════════════════════════════════════════════════
+        function el(id) { return document.getElementById(id); }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+            });
+        }
+
+        var CATEGORIES = [
+            { valeur: "Vêtements",    libelle: "Vêtements",             icone: "👕" },
+            { valeur: "Accessoires",  libelle: "Accessoires",           icone: "👜" },
+            { valeur: "Informatique", libelle: "Informatique",          icone: "💻" },
+            { valeur: "Fournitures",  libelle: "Fournitures scolaires", icone: "✏️" },
+            { valeur: "Alimentation", libelle: "Alimentation",          icone: "🍎" },
+            { valeur: "Plat du jour", libelle: "Plat du jour",          icone: "🍲" },
+            { valeur: "Électronique", libelle: "Électronique",          icone: "🔌" },
+            { valeur: "Autre",        libelle: "Autre",                 icone: "📦" }
+        ];
+
+        function libelleCategorie(valeur) {
+            for (var i = 0; i < CATEGORIES.length; i++) {
+                if (CATEGORIES[i].valeur === valeur) return CATEGORIES[i].libelle;
+            }
+            return valeur || "Autre";
+        }
+
+        // ══════════════════════════════════════
+        // CATÉGORIES AJOUTÉES PAR L'ADMIN (nœud Firebase "categories")
+        // ══════════════════════════════════════
+
+        function majSelectCategories() {
+            var sel = el("select_categorie");
+            if (!sel) return;
+            var courant = sel.value;
+            var html = "<option value=''>Toutes catégories</option>";
+            CATEGORIES.forEach(function(c) {
+                html += "<option value='" + esc(c.valeur) + "'>" + esc(c.libelle) + "</option>";
+            });
+            sel.innerHTML = html;
+            if (courant && !CATEGORIES.some(function(c) { return c.valeur === courant; })) {
+                sel.appendChild(new Option(courant, courant));
+            }
+            sel.value = courant;
+        }
+
+        onValue(ref(db, "categories"), function(snap) {
+            snap.forEach(function(e) {
+                var c = e.val();
+                if (!c || !c.valeur) return;
+                if (CATEGORIES.some(function(x) { return x.valeur === c.valeur; })) return;
+                CATEGORIES.push({ valeur: c.valeur, libelle: c.libelle || c.valeur, icone: c.icone || "🏷️" });
+            });
+            majSelectCategories();
+        }, function(err) { console.error(err); });
+
+        // ── COMPTEUR DE FAVORIS : articles les plus mis en favoris par l'ensemble des visiteurs ──
+        // Chaque ♥ ajoute/retire 1 au compteur Firebase « favorisCompteur/<idArticle> ».
+
+        function majCompteurFavori(id, delta) {
+            try {
+                runTransaction(ref(db, "favorisCompteur/" + id), function(n) {
+                    n = (Number(n) || 0) + delta;
+                    return n > 0 ? n : null;
+                }).catch(function(err) { console.error(err); });
+            } catch (e) { console.error(e); }
+        }
+
+        // Stockage sur l'appareil du visiteur (favoris, recherches récentes, centres d'intérêt)
+        function lireStockage(cle, defaut) {
+            try {
+                var v = JSON.parse(localStorage.getItem(cle));
+                return (v === null || v === undefined) ? defaut : v;
+            } catch (e) { return defaut; }
+        }
+        function ecrireStockage(cle, valeur) {
+            try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch (e) {}
+        }
+
+        var favoris = lireStockage("esetec_favoris", []);
+        if (!Array.isArray(favoris)) favoris = [];
+
+        var affinite = lireStockage("esetec_affinite", {});
+        if (!affinite || typeof affinite !== "object" || Array.isArray(affinite)) affinite = {};
+
+        function estFavori(id) { return favoris.indexOf(id) > -1; }
+
+        function noterAffinite(categorie, poids) {
+            if (!categorie) return;
+            affinite[categorie] = (affinite[categorie] || 0) + poids;
+            ecrireStockage("esetec_affinite", affinite);
+        }
+
+        // Vue affichée : "tous" (accueil) ou "favoris"
+        var vueActuelle = (window.location.hash === "#favoris") ? "favoris" : "tous";
+        var flashDispo = false;
+        var termesSurlignes = [];
+
+        // ── Petit message temporaire en bas de l'écran ──
+        var minuteurToast = null;
+        function afficherToast(message) {
+            var t = el("bn-toast");
+            if (!t) return;
+            t.textContent = message;
+            t.classList.add("visible");
+            clearTimeout(minuteurToast);
+            minuteurToast = setTimeout(function() { t.classList.remove("visible"); }, 1800);
+        }
+
+        // ══════════════════════════════════════
+        // FAVORIS
+        // ══════════════════════════════════════
+        var SVG_COEUR = "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z'/></svg>";
+
+        function boutonFavoriHTML(id, dansFenetre) {
+            var f = estFavori(id);
+            return "<button type='button' class='btn-fav" + (dansFenetre ? " btn-fav-modal" : "") + (f ? " actif" : "") +
+                   "' data-id='" + esc(id) + "' aria-pressed='" + f + "' aria-label='" +
+                   (f ? "Retirer des favoris" : "Ajouter aux favoris") + "'>" + SVG_COEUR + "</button>";
+        }
+
+        function nombreFavorisValides() {
+            if (!toutEstCharge || !tousLesArticles.length) return favoris.length;
+            return favoris.filter(function(id) {
+                return tousLesArticles.some(function(a) { return a.id === id; });
+            }).length;
+        }
+
+        function majBadgesFavoris() {
+            var n = nombreFavorisValides();
+            ["bn-fav-count", "menu-fav-count"].forEach(function(id) {
+                var b = el(id);
+                if (!b) return;
+                b.textContent = n;
+                b.hidden = !(n > 0);
+            });
+        }
+
+        window.basculerFavori = function(id) {
+            var position = favoris.indexOf(id);
+            var ajoute = (position === -1);
+            if (ajoute) { favoris.push(id); } else { favoris.splice(position, 1); }
+            ecrireStockage("esetec_favoris", favoris);
+            majCompteurFavori(id, ajoute ? 1 : -1);   // compteur public des favoris
+
+            if (ajoute) {
+                var article = tousLesArticles.filter(function(a) { return a.id === id; })[0];
+                if (article) noterAffinite(article.categorie, 2);
+            }
+
+            document.querySelectorAll(".btn-fav").forEach(function(b) {
+                if (b.getAttribute("data-id") !== id) return;
+                b.classList.toggle("actif", ajoute);
+                b.setAttribute("aria-pressed", ajoute ? "true" : "false");
+                b.setAttribute("aria-label", ajoute ? "Retirer des favoris" : "Ajouter aux favoris");
+            });
+
+            majBadgesFavoris();
+            afficherToast(ajoute ? "Ajouté aux favoris ♥" : "Retiré des favoris");
+
+            // Dans la page "Favoris", un article retiré disparaît de la liste
+            if (!ajoute && vueActuelle === "favoris") filtrerArticles();
+        };
+
+        document.addEventListener("click", function(e) {
+            var b = e.target.closest ? e.target.closest(".btn-fav") : null;
+            if (!b) return;
+            e.preventDefault();
+            window.basculerFavori(b.getAttribute("data-id"));
+        });
+
+        // ══════════════════════════════════════
+        // RECHERCHE INTELLIGENTE
+        // - ignore majuscules, accents et ponctuation
+        // - plusieurs mots : tous doivent correspondre (dans n'importe quel ordre)
+        // - cherche dans le nom, la catégorie, le vendeur, les tailles/couleurs et la description
+        // - tolère les fautes de frappe
+        // - classe par pertinence (puis tient compte de vos centres d'intérêt)
+        // ══════════════════════════════════════
+        // <<PURE-START>>
+        function norm(s) {
+            s = String(s == null ? "" : s);
+            var out = "";
+            for (var i = 0; i < s.length; i++) {
+                var c = s.charAt(i);
+                var n = c.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                out += (n.length === 1) ? n : (n.charAt(0) || c);
+            }
+            return out;
+        }
+
+        var SEPARATEURS = /[\s,;:.!?'’"()\/\-_+]+/;
+        function jetonsDe(texte) {
+            return norm(texte).split(SEPARATEURS).filter(function(t) { return t.length > 0; });
+        }
+
+        var CHAMPS = ["nom", "cat", "vend", "variantes", "desc"];
+        var POIDS = {
+            nom:       [100, 80, 60],
+            cat:       [70, 55, 40],
+            vend:      [50, 40, 30],
+            variantes: [45, 35, 25],
+            desc:      [40, 30, 20]
+        };
+
+        function indexer(a) {
+            if (a._idx) return a._idx;
+            var brut = {
+                nom: a.nom,
+                cat: (a.categorie || "Autre") + " " + libelleCategorie(a.categorie),
+                vend: a.vendeur,
+                variantes: [].concat(a.tailles || [], a.couleurs || []).join(" "),
+                desc: a.description
+            };
+            var idx = { txt: {}, mots: {} };
+            CHAMPS.forEach(function(c) {
+                idx.txt[c] = norm(brut[c]);
+                idx.mots[c] = jetonsDe(brut[c]);
+            });
+            a._idx = idx;
+            return idx;
+        }
+
+        // Distance de Levenshtein (s'arrête dès que la distance dépasse "max")
+        function distance(a, b, max) {
+            if (Math.abs(a.length - b.length) > max) return max + 1;
+            var prev = [], cur = [], i, j;
+            for (j = 0; j <= b.length; j++) prev[j] = j;
+            for (i = 1; i <= a.length; i++) {
+                cur[0] = i;
+                var minLigne = cur[0];
+                for (j = 1; j <= b.length; j++) {
+                    var cout = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+                    cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cout);
+                    if (cur[j] < minLigne) minLigne = cur[j];
+                }
+                if (minLigne > max) return max + 1;
+                var tmp = prev; prev = cur; cur = tmp;
+            }
+            return prev[b.length];
+        }
+
+        function scoreJeton(t, idx) {
+            var meilleur = 0;
+            CHAMPS.forEach(function(c) {
+                var poids = POIDS[c], mots = idx.mots[c], s = 0;
+                if (mots.indexOf(t) > -1) {
+                    s = poids[0];
+                } else if (mots.some(function(w) { return w.indexOf(t) === 0; })) {
+                    s = poids[1];
+                } else if (t.length >= 3 && idx.txt[c].indexOf(t) > -1) {
+                    s = poids[2];
+                }
+                if (s > meilleur) meilleur = s;
+            });
+            if (meilleur > 0) return meilleur;
+
+            // Faute de frappe : on accepte 1 erreur (2 pour les longs mots)
+            if (t.length >= 4) {
+                var tolerance = t.length >= 8 ? 2 : 1;
+                ["nom", "cat", "vend", "desc"].forEach(function(c) {
+                    idx.mots[c].forEach(function(w) {
+                        if (distance(t, w, tolerance) <= tolerance) {
+                            var s = Math.max(10, POIDS[c][2] - 25);
+                            if (s > meilleur) meilleur = s;
+                        }
+                    });
+                });
+            }
+            return meilleur;
+        }
+
+        // Retourne null si l'article ne correspond pas, sinon un score (plus haut = plus pertinent)
+        function scoreArticle(a, jetons, requeteBrute) {
+            var idx = indexer(a), total = 0;
+            for (var i = 0; i < jetons.length; i++) {
+                var s = scoreJeton(jetons[i], idx);
+                if (s <= 0) return null;
+                total += s;
+            }
+            var phrase = norm(requeteBrute).trim();
+            var pos = idx.txt.nom.indexOf(phrase);
+            if (jetons.length > 1 && pos > -1) total += 40;
+            if (pos === 0) total += 20;
+            if (a.stock === "rupture") total -= 25;
+            total += Math.min(affinite[a.categorie] || 0, 10);   // vos centres d'intérêt
+            if (estFavori(a.id)) total += 5;
+            return total;
+        }
+        // <<PURE-END>>
+
+        // Met en gras (surligne) les mots recherchés
+        function surligner(texte, jetons) {
+            texte = String(texte == null ? "" : texte);
+            jetons = jetons || termesSurlignes;
+            if (!jetons.length) return esc(texte);
+            var n = norm(texte), marques = [];
+            jetons.forEach(function(t) {
+                if (t.length < 2) return;
+                var p = 0, k;
+                while ((k = n.indexOf(t, p)) > -1) { marques.push([k, k + t.length]); p = k + t.length; }
+            });
+            if (!marques.length) return esc(texte);
+            marques.sort(function(x, y) { return x[0] - y[0]; });
+            var fusion = [marques[0]];
+            for (var i = 1; i < marques.length; i++) {
+                var dernier = fusion[fusion.length - 1];
+                if (marques[i][0] <= dernier[1]) { dernier[1] = Math.max(dernier[1], marques[i][1]); }
+                else { fusion.push(marques[i]); }
+            }
+            var html = "", pos = 0;
+            fusion.forEach(function(m) {
+                html += esc(texte.slice(pos, m[0])) + "<mark>" + esc(texte.slice(m[0], m[1])) + "</mark>";
+                pos = m[1];
+            });
+            return html + esc(texte.slice(pos));
+        }
+
+        // "Vouliez-vous dire ... ?"
+        var vocabulaire = null;
+        function construireVocabulaire() {
+            var v = {};
+            tousLesArticles.forEach(function(a) {
+                var idx = indexer(a);
+                ["nom", "cat"].forEach(function(c) {
+                    idx.mots[c].forEach(function(m) { if (m.length >= 3) v[m] = true; });
+                });
+            });
+            vocabulaire = Object.keys(v);
+        }
+        function corrigerRequete(jetons) {
+            if (!vocabulaire) construireVocabulaire();
+            var change = false;
+            var res = jetons.map(function(t) {
+                if (t.length < 4) return t;
+                if (vocabulaire.some(function(m) { return m.indexOf(t) === 0; })) return t;
+                var tol = t.length >= 8 ? 2 : 1, meilleur = null, md = tol + 1;
+                vocabulaire.forEach(function(m) {
+                    var d = distance(t, m, tol);
+                    if (d < md) { md = d; meilleur = m; }
+                });
+                if (meilleur) { change = true; return meilleur; }
+                return t;
+            });
+            return change ? res.join(" ") : null;
+        }
+
+        // Recherches récentes
+        function lireRecherches() {
+            var l = lireStockage("esetec_recherches", []);
+            return Array.isArray(l) ? l : [];
+        }
+        function memoriserRecherche(q) {
+            q = String(q || "").trim();
+            if (norm(q).length < 2) return;
+            var liste = lireRecherches().filter(function(r) { return norm(r) !== norm(q); });
+            liste.unshift(q);
+            ecrireStockage("esetec_recherches", liste.slice(0, 6));
+        }
+
+        // Catégories proposées en priorité : celles que le visiteur consulte le plus
+        function categoriesPourVous() {
+            var presentes = {};
+            tousLesArticles.forEach(function(a) { presentes[a.categorie || "Autre"] = true; });
+            var liste = CATEGORIES.filter(function(c) { return presentes[c.valeur]; });
+            var preferees = liste.filter(function(c) { return (affinite[c.valeur] || 0) > 0; })
+                                 .sort(function(x, y) { return affinite[y.valeur] - affinite[x.valeur]; });
+            return {
+                titre: preferees.length ? "Pour vous" : "Catégories",
+                liste: (preferees.length ? preferees : liste).slice(0, 4)
+            };
+        }
+
+        // ══════════════════════════════════════
+        // FILTRAGE + TRI (appelé à chaque frappe, avec un léger délai)
+        // ══════════════════════════════════════
+        var minuteurRecherche = null;
+        var pubInitialisee = false;
+
+        window.rechercheDynamique = function() {
+            clearTimeout(minuteurRecherche);
+            minuteurRecherche = setTimeout(function() {
+                filtrerArticles();
+                majSuggestions();
+            }, 120);
+        };
+
+        function defilerVersArticles() {
+            var s = el("articles");
+            if (s && s.scrollIntoView) s.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function messageVide(jetons, filtresActifs) {
+            if (vueActuelle === "favoris" && !filtresActifs) {
+                return "<div class='aucun-article' style='grid-column:1/-1;'>" +
+                       "<div style='font-size:48px;'>🤍</div>" +
+                       "<p>Vous n'avez pas encore de favoris.<br>Touchez le ♡ sur un article pour le retrouver ici plus tard.</p>" +
+                       "<button type='button' class='btn-vide' data-action='accueil'>Voir les articles</button></div>";
+            }
+            if (!filtresActifs) return null;
+            var h = "<div class='aucun-article' style='grid-column:1/-1;'>" +
+                    "<div style='font-size:48px;'>🔍</div>" +
+                    "<p>Aucun article ne correspond à votre recherche.</p>";
+            if (jetons.length) {
+                var corr = corrigerRequete(jetons);
+                if (corr) {
+                    h += "<p>Vouliez-vous dire <button type='button' class='sug-lien' data-action='requete' data-q='" +
+                         esc(corr) + "'>" + esc(corr) + "</button> ?</p>";
+                }
+            }
+            return h + "<button type='button' class='btn-vide' data-action='reset'>Réinitialiser les filtres</button></div>";
+        }
+
+        window.filtrerArticles = function() {
+            var q = el("input_recherche").value;
+            var categorie = el("select_categorie").value;
+            var tri = el("select_tri") ? el("select_tri").value : "pertinence";
+            var stockSeul = el("filtre_stock") ? el("filtre_stock").checked : false;
+            var pMin = el("prix_min") ? parseFloat(el("prix_min").value) : NaN;
+            var pMax = el("prix_max") ? parseFloat(el("prix_max").value) : NaN;
+
+            var jetons = jetonsDe(q);
+            termesSurlignes = jetons;
+
+            var filtresActifs = !!(jetons.length || categorie || stockSeul || !isNaN(pMin) || !isNaN(pMax) || tri !== "pertinence");
+
+            // La bannière pub et les ventes flash disparaissent dès qu'une recherche ou les favoris sont affichés
+            var avant = rechercheActive;
+            rechercheActive = filtresActifs || vueActuelle === "favoris";
+            if (avant !== rechercheActive || !pubInitialisee) {
+                miseAJourAffichagePub();
+                pubInitialisee = true;
+            }
+            var sectionFlash = el("flash");
+            if (sectionFlash) sectionFlash.style.display = (!rechercheActive && flashDispo) ? "" : "none";
+
+            // Titre de la liste
+            var titre = el("titre_articles");
+            if (titre) {
+                if (vueActuelle === "favoris") titre.textContent = "Mes favoris";
+                else if (jetons.length) titre.textContent = "Résultats pour « " + q.trim() + " »";
+                else if (categorie) titre.textContent = libelleCategorie(categorie);
+                else titre.textContent = "Articles disponibles";
+            }
+
+            // Recherche, filtres, tri ou favoris : on a besoin de TOUS les articles
+            if ((filtresActifs || vueActuelle === "favoris") && !toutEstCharge) {
+                conserverAffichage = false;
+                if (observateurChargement) observateurChargement.disconnect();
+                el("compteur").textContent = "";
+                lazyRelease(el("grille-articles"));
+                el("grille-articles").innerHTML = "<div class='chargement' style='grid-column:1/-1;'>⏳ Chargement de tous les articles…</div>";
+                chargerTout();
+                return;
+            }
+
+            var base = (vueActuelle === "favoris")
+                ? tousLesArticles.filter(function(a) { return estFavori(a.id); })
+                : tousLesArticles;
+
+            var resultats = [];
+            base.forEach(function(a, i) {
+                if (categorie && a.categorie !== categorie) return;
+                if (stockSeul && a.stock === "rupture") return;
+                var prix = Number(a.prix);
+                if (!isNaN(pMin) && !(prix >= pMin)) return;
+                if (!isNaN(pMax) && !(prix <= pMax)) return;
+                var score = 0;
+                if (jetons.length) {
+                    score = scoreArticle(a, jetons, q);
+                    if (score === null) return;
+                }
+                resultats.push({ a: a, s: score, i: i });
+            });
+
+            if (tri === "prix-asc") {
+                resultats.sort(function(x, y) {
+                    var px = Number(x.a.prix) > 0 ? Number(x.a.prix) : 9e15;
+                    var py = Number(y.a.prix) > 0 ? Number(y.a.prix) : 9e15;
+                    return px - py || x.i - y.i;
+                });
+            } else if (tri === "prix-desc") {
+                resultats.sort(function(x, y) {
+                    var px = Number(x.a.prix) > 0 ? Number(x.a.prix) : -1;
+                    var py = Number(y.a.prix) > 0 ? Number(y.a.prix) : -1;
+                    return py - px || x.i - y.i;
+                });
+            } else if (tri === "ancien") {
+                // du plus ancien au plus récent (l'index i va du plus récent au plus ancien)
+                resultats.sort(function(x, y) { return y.i - x.i; });
+            } else if (jetons.length) {
+                resultats.sort(function(x, y) { return y.s - x.s || x.i - y.i; });
+            }
+
+            afficherArticles(
+                resultats.map(function(r) { return r.a; }),
+                messageVide(jetons, filtresActifs)
+            );
+        };
+
+        window.reinitialiserFiltres = function() {
+            el("input_recherche").value = "";
+            el("select_categorie").value = "";
+            if (el("select_tri")) el("select_tri").value = "pertinence";
+            if (el("prix_min")) el("prix_min").value = "";
+            if (el("prix_max")) el("prix_max").value = "";
+            if (el("filtre_stock")) el("filtre_stock").checked = false;
+        };
+
+        window.reinitialiserEtFiltrer = function() {
+            window.reinitialiserFiltres();
+            filtrerArticles();
+            fermerSuggestions();
+        };
+
+        // ══════════════════════════════════════
+        // SUGGESTIONS PENDANT LA FRAPPE
+        // ══════════════════════════════════════
+        var indexSuggestion = -1;
+
+        function fermerSuggestions() {
+            var p = el("suggestions");
+            if (p) p.hidden = true;
+            indexSuggestion = -1;
+        }
+
+        window.majSuggestions = function() {
+            var panneau = el("suggestions"), champ = el("input_recherche");
+            if (!panneau || !champ) return;
+            var q = champ.value, jetons = jetonsDe(q), html = "", i;
+
+            if (!jetons.length) {
+                // Champ vide : recherches récentes + catégories "pour vous"
+                var recents = lireRecherches();
+                if (recents.length) {
+                    html += "<div class='sug-titre'><span>Recherches récentes</span>" +
+                            "<button type='button' class='sug-lien' data-type='effacer'>Effacer</button></div>";
+                    recents.forEach(function(r) {
+                        html += "<div class='sug-item' role='option' data-type='requete' data-val='" + esc(r) + "'>" +
+                                "<span class='sug-ico'>🕘</span><span class='sug-txt'>" + esc(r) + "</span>" +
+                                "<button type='button' class='sug-x' data-type='suppr' data-val='" + esc(r) + "' aria-label='Supprimer'>✕</button></div>";
+                    });
+                }
+                var pv = categoriesPourVous();
+                if (pv.liste.length) {
+                    html += "<div class='sug-titre'><span>" + pv.titre + "</span></div><div class='sug-chips'>";
+                    pv.liste.forEach(function(c) {
+                        html += "<button type='button' class='sug-chip' data-type='categorie' data-val='" + esc(c.valeur) + "'>" +
+                                c.icone + " " + esc(c.libelle) + "</button>";
+                    });
+                    html += "</div>";
+                }
+            } else {
+                var cats = CATEGORIES.filter(function(c) {
+                    var l = norm(c.libelle);
+                    return jetons.every(function(t) { return l.indexOf(t) > -1; });
+                }).slice(0, 2);
+
+                var trouves = [];
+                tousLesArticles.forEach(function(a, k) {
+                    var s = scoreArticle(a, jetons, q);
+                    if (s !== null) trouves.push({ a: a, s: s, i: k });
+                });
+                trouves.sort(function(x, y) { return y.s - x.s || x.i - y.i; });
+                var top = trouves.slice(0, 5);
+
+                cats.forEach(function(c) {
+                    html += "<div class='sug-item' role='option' data-type='categorie' data-val='" + esc(c.valeur) + "'>" +
+                            "<span class='sug-ico'>" + c.icone + "</span><span class='sug-txt'>Catégorie : <b>" + esc(c.libelle) + "</b></span></div>";
+                });
+
+                var vignettes = [];
+                top.forEach(function(r) {
+                    var a = r.a;
+                    var photos = (a.photos && a.photos.length) ? a.photos : (a.photo ? [a.photo] : []);
+                    var vignette = photos[0]
+                        ? "<img class='sug-thumb' alt='' data-sug='" + vignettes.length + "'>"
+                        : "<span class='sug-ico'>📦</span>";
+                    if (photos[0]) vignettes.push(photos[0]);
+                    var prix = a.prix ? parseInt(a.prix).toLocaleString("fr-FR") + " FCFA" : "";
+                    html += "<div class='sug-item' role='option' data-type='article' data-val='" + esc(a.nom) + "'>" +
+                            vignette + "<span class='sug-txt'>" + surligner(a.nom, jetons) + "</span>" +
+                            "<span class='sug-prix'>" + esc(prix) + "</span></div>";
+                });
+
+                if (!top.length && !cats.length) {
+                    html += "<div class='sug-vide'>Aucun article trouvé pour « " + esc(q.trim()) + " »</div>";
+                    var corr = corrigerRequete(jetons);
+                    if (corr) {
+                        html += "<div class='sug-item' role='option' data-type='requete' data-val='" + esc(corr) + "'>" +
+                                "<span class='sug-ico'>💡</span><span class='sug-txt'>Vouliez-vous dire <b>" + esc(corr) + "</b> ?</span></div>";
+                    }
+                } else if (trouves.length > top.length) {
+                    html += "<div class='sug-item sug-tous' role='option' data-type='lancer'>Voir les " + trouves.length +
+                            " résultats pour « " + esc(q.trim()) + " »</div>";
+                }
+            }
+
+            panneau.innerHTML = html;
+            panneau.hidden = !html;
+            indexSuggestion = -1;
+
+            // Les vignettes sont visibles tout de suite : chargement immédiat, mais hors du HTML
+            panneau.querySelectorAll("img[data-sug]").forEach(function(img) {
+                lazyWatch(img, vignettes[parseInt(img.getAttribute("data-sug"), 10)], { now: true });
+            });
+        };
+
+        window.lancerRecherche = function() {
+            var champ = el("input_recherche");
+            memoriserRecherche(champ.value);
+            fermerSuggestions();
+            filtrerArticles();
+            defilerVersArticles();
+            champ.blur();
+        };
+
+        (function() {
+            var champ = el("input_recherche"), panneau = el("suggestions");
+            if (!champ || !panneau) return;
+
+            panneau.addEventListener("click", function(e) {
+                var cible = e.target.closest("[data-type]");
+                if (!cible) return;
+                e.stopPropagation();
+                var type = cible.getAttribute("data-type"), val = cible.getAttribute("data-val");
+
+                if (type === "suppr") {
+                    ecrireStockage("esetec_recherches", lireRecherches().filter(function(r) { return r !== val; }));
+                    window.majSuggestions();
+                } else if (type === "effacer") {
+                    ecrireStockage("esetec_recherches", []);
+                    window.majSuggestions();
+                } else if (type === "categorie") {
+                    choisirCategorie(val);
+                } else if (type === "requete" || type === "article") {
+                    champ.value = val;
+                    window.lancerRecherche();
+                } else if (type === "lancer") {
+                    window.lancerRecherche();
+                }
+            });
+
+            champ.addEventListener("keydown", function(e) {
+                var items = panneau.hidden ? [] : panneau.querySelectorAll(".sug-item");
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                    if (!items.length) return;
+                    e.preventDefault();
+                    var nouveau = indexSuggestion + (e.key === "ArrowDown" ? 1 : -1);
+                    if (nouveau < 0) nouveau = items.length - 1;
+                    if (nouveau >= items.length) nouveau = 0;
+                    indexSuggestion = nouveau;
+                    items.forEach(function(it, k) { it.classList.toggle("survol", k === nouveau); });
+                    items[nouveau].scrollIntoView({ block: "nearest" });
+                } else if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (indexSuggestion > -1 && items[indexSuggestion]) { items[indexSuggestion].click(); }
+                    else { window.lancerRecherche(); }
+                } else if (e.key === "Escape") {
+                    fermerSuggestions();
+                }
+            });
+
+            document.addEventListener("click", function(e) {
+                if (!e.target.closest(".nav-recherche")) fermerSuggestions();
+            });
+        })();
+
+        // ══════════════════════════════════════
+        // NAVIGATION : Accueil / Catégories / Favoris
+        // ══════════════════════════════════════
+        function majNavActif() {
+            document.querySelectorAll("[data-nav]").forEach(function(a) {
+                var n = a.getAttribute("data-nav");
+                a.classList.toggle("actif",
+                    (n === "accueil" && vueActuelle === "tous") || (n === "favoris" && vueActuelle === "favoris"));
+            });
+        }
+
+        window.allerVue = function(v) {
+            fermerSuggestions();
+            if (v === "categories") { ouvrirCategories(); return; }
+            window.reinitialiserFiltres();
+            vueActuelle = (v === "favoris") ? "favoris" : "tous";
+            filtrerArticles();
+            majNavActif();
+            if (v === "favoris") { defilerVersArticles(); }
+            else { window.scrollTo({ top: 0, behavior: "smooth" }); }
+        };
+
+        document.querySelectorAll("[data-nav]").forEach(function(a) {
+            a.addEventListener("click", function(e) {
+                e.preventDefault();
+                window.allerVue(a.getAttribute("data-nav"));
+            });
+        });
+
+        // Boutons d'action dans les messages "aucun résultat"
+        document.addEventListener("click", function(e) {
+            var b = e.target.closest ? e.target.closest("[data-action]") : null;
+            if (!b) return;
+            var action = b.getAttribute("data-action");
+            if (action === "accueil") { window.allerVue("accueil"); }
+            else if (action === "reset") { window.reinitialiserEtFiltrer(); }
+            else if (action === "requete") {
+                el("input_recherche").value = b.getAttribute("data-q");
+                window.lancerRecherche();
+            }
+        });
+
+        // ── Fenêtre "Catégories" ──
+        function badgeNb(n) {
+            return toutEstCharge ? "<span class='cat-n'>" + n + "</span>" : "";
+        }
+
+        function ouvrirCategories() {
+            var compte = {};
+            tousLesArticles.forEach(function(a) {
+                var c = a.categorie || "Autre";
+                compte[c] = (compte[c] || 0) + 1;
+            });
+            var html = "<button type='button' class='cat-btn' data-cat=''><span class='cat-ico'>🛍️</span>" +
+                       "<span class='cat-nom'>Tous les articles</span>" + badgeNb(tousLesArticles.length) + "</button>";
+            CATEGORIES.forEach(function(c) {
+                html += "<button type='button' class='cat-btn' data-cat='" + esc(c.valeur) + "'>" +
+                        "<span class='cat-ico'>" + c.icone + "</span><span class='cat-nom'>" + esc(c.libelle) + "</span>" +
+                        badgeNb(compte[c.valeur] || 0) + "</button>";
+            });
+            el("cat_grille").innerHTML = html;
+            el("cat_overlay").classList.add("ouverte");
+        }
+
+        window.fermerCategories = function() {
+            el("cat_overlay").classList.remove("ouverte");
+        };
+
+        function choisirCategorie(valeur) {
+            window.reinitialiserFiltres();
+            vueActuelle = "tous";
+            el("select_categorie").value = valeur;
+            window.fermerCategories();
+            fermerSuggestions();
+            filtrerArticles();
+            majNavActif();
+            defilerVersArticles();
+        }
+
+        el("cat_grille").addEventListener("click", function(e) {
+            var b = e.target.closest("[data-cat]");
+            if (b) choisirCategorie(b.getAttribute("data-cat"));
+        });
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") window.fermerCategories();
+        });
+
+        // Démarrage
+        majNavActif();
+        majBadgesFavoris();
+
+    </script>
+
+    <!-- BASCULE "MON COMPTE" DANS LES BARRES DE NAVIGATION -->
+    <script>
+        (function () {
+            try {
+                if (!localStorage.getItem("esetec_vendeur_id")) { return; }
+                document.querySelectorAll("[data-nav-compte] .nav-lbl").forEach(function (t) { t.textContent = "Mon compte"; });
+                var lien = document.getElementById("nav_espace_vendeur");
+                if (lien) { lien.classList.add("nav-mon-compte"); }
+            } catch (e) {}
+        })();
+    </script>
+
+
+    <!-- BARRE DE NAVIGATION DU BAS (mobile) -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <a href="#accueil" class="bn-item" data-nav="accueil">
+            <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+            <span>Accueil</span>
+        </a>
+        <a href="#categories" class="bn-item" data-nav="categories">
+            <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h8"/></svg>
+            <span>Catégories</span>
+        </a>
+        <a href="#favoris" class="bn-item" data-nav="favoris">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z"/></svg>
+            <span>Favoris</span>
+            <b class="bn-badge" id="bn-fav-count" hidden>0</b>
+        </a>
+        <a href="espace_vendeur.html" class="bn-item" data-nav-compte>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+            <span class="nav-lbl">Compte</span>
+        </a>
+    </nav>
+    <button type="button" class="btn-haut" id="btn_haut" aria-label="Remonter en haut de la page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+    <script>
+        (function () {
+            var b = document.getElementById("btn_haut");
+            if (!b) { return; }
+            window.addEventListener("scroll", function () {
+                b.classList.toggle("visible", window.scrollY > 700);
+            }, { passive: true });
+            b.addEventListener("click", function () {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        })();
+    </script>
+    <div class="bn-toast" id="bn-toast" role="status" aria-live="polite"></div>
+
+    <!-- COMPTE À REBOURS DES VENTES FLASH (repart à zéro chaque jour à minuit) -->
+    <script>
+        (function () {
+            var el = document.getElementById("flash-timer");
+            if (!el) { return; }
+            function p(n) { return String(n).padStart(2, "0"); }
+            function maj() {
+                var now = new Date();
+                var fin = new Date(now);
+                fin.setHours(24, 0, 0, 0);
+                var s = Math.floor((fin - now) / 1000);
+                el.textContent = p(Math.floor(s / 3600)) + "h : " + p(Math.floor(s % 3600 / 60)) + "m : " + p(s % 60) + "s";
+            }
+            maj();
+            setInterval(maj, 1000);
+        })();
+    </script>
+
+
+    <!-- DESCRIPTION DÉPLIABLE (Voir plus / Voir moins) -->
+    <script>
+        (function () {
+            var grille = document.getElementById("grille-articles");
+            if (!grille) { return; }
+
+            // Affiche le bouton seulement si la description dépasse 2 lignes
+            function majBoutons() {
+                grille.querySelectorAll(".carte-desc").forEach(function (desc) {
+                    var bouton = desc.nextElementSibling;
+                    if (!bouton || !bouton.classList.contains("desc-toggle")) { return; }
+                    var ouverte = desc.classList.contains("ouverte");
+                    bouton.hidden = !(ouverte || desc.scrollHeight > desc.clientHeight + 1);
+                    desc.style.cursor = bouton.hidden ? "" : "pointer";
+                });
+            }
+
+            // Un clic sur le texte OU sur le bouton déplie / replie la description
+            grille.addEventListener("click", function (e) {
+                var cible = e.target.closest(".desc-toggle, .carte-desc");
+                if (!cible) { return; }
+                var desc = cible.classList.contains("carte-desc") ? cible : cible.previousElementSibling;
+                var bouton = desc.nextElementSibling;
+                if (!bouton || bouton.hidden) { return; }
+                var ouverte = desc.classList.toggle("ouverte");
+                bouton.textContent = ouverte ? "Voir moins" : "Voir plus";
+            });
+
+            new MutationObserver(majBoutons).observe(grille, { childList: true, subtree: true });
+            window.addEventListener("resize", majBoutons);
+            window.addEventListener("load", majBoutons);
+        })();
+    </script>
+
+    <script type="module" src="visites.js" data-role="client"></script>
+</body>
+</html>

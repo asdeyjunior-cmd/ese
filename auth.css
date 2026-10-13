@@ -1,0 +1,1169 @@
+/* =========================================================
+   ESETEC MARKETPLACE — CONNEXION & INSCRIPTION
+   À charger APRÈS espace_vendeur.css
+   Polices : Bricolage Grotesque (titres) + Figtree (texte)
+========================================================= */
+
+:root{
+    --e-rouge: #e4231f;
+    --e-orange: #ff6a13;
+    --e-brun: #8b2d00;
+    --e-noir: #150f0c;
+    --e-or: #ffc832;
+    --e-texte: #2a1e18;
+    --e-gris: #75695f;
+    --e-bordure: #e8e0da;
+    --e-champ: #faf7f4;
+    --e-vert: #1f9d55;
+    --e-degrade: linear-gradient(135deg, #e4231f 0%, #ff6a13 100%);
+    --e-titres: "Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    --e-texte-police: "Figtree", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+
+/* =========================================================
+   BASCULE ENTRE LES DEUX MODES DE LA PAGE
+   - visiteur non connecté  -> écran de connexion / inscription
+   - vendeur connecté       -> tableau de bord (compteur, articles)
+========================================================= */
+
+html, body{
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+img{
+    max-width: 100%;
+    height: auto;
+}
+
+body:not(.mode-vendeur){
+    background: var(--e-noir);
+}
+
+body:not(.mode-vendeur) .zone-vendeur{
+    display: none;
+}
+
+body.mode-vendeur #zone_auth{
+    display: none;
+}
+
+
+/* =========================================================
+   STRUCTURE GÉNÉRALE
+========================================================= */
+
+.auth{
+    position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: var(--e-texte-police);
+    color: #fff;
+}
+
+/* Image de fond fixe + overlay sombre teinté aux couleurs ESETEC */
+.auth::before{
+    content: "";
+    position: fixed;
+    inset: -20px;
+    z-index: -2;
+    background: url("imade_arriere_plan1.webp") center / cover no-repeat;
+    filter: blur(3px);
+}
+
+.auth::after{
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(60% 50% at 8% 0%, rgba(255,106,19,0.30), transparent 70%),
+        radial-gradient(50% 45% at 100% 100%, rgba(228,35,31,0.30), transparent 70%),
+        linear-gradient(115deg,
+            rgba(18,10,6,0.95) 0%,
+            rgba(30,13,6,0.90) 50%,
+            rgba(70,22,6,0.84) 100%);
+}
+
+.auth-grille{
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-width: 1680px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   ZONE VISUELLE (GAUCHE)
+========================================================= */
+
+.auth-visuel{
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    height: 100dvh;
+    padding: 40px 56px 36px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+    overflow: hidden;
+}
+
+.visuel-haut,
+.visuel-centre,
+.visuel-bas{
+    position: relative;
+    z-index: 1;
+}
+
+/* Décor discret */
+.deco-anneau{
+    position: absolute;
+    top: -150px;
+    right: -130px;
+    width: 440px;
+    height: 440px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,106,19,0.30);
+    pointer-events: none;
+}
+
+.deco-anneau::before{
+    content: "";
+    position: absolute;
+    inset: 44px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255,200,50,0.22);
+}
+
+.deco-panier{
+    position: absolute;
+    right: -46px;
+    bottom: 34px;
+    width: 360px;
+    height: 360px;
+    color: rgba(255,255,255,0.055);
+    stroke-width: 1.1;
+    pointer-events: none;
+}
+
+/* Marque + liens */
+.visuel-haut{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.marque{
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: #fff;
+}
+
+.marque-logo{
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    overflow: hidden;
+}
+
+.marque-logo img{
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+}
+
+.marque-texte{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+.marque-texte strong{
+    font-family: var(--e-titres);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.marque-texte em{
+    font-style: normal;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--e-or);
+}
+
+.liens-haut{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.liens-haut a{
+    padding: 9px 14px;
+    color: rgba(255,255,255,0.78);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 999px;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+.liens-haut a:hover,
+.liens-haut a:focus-visible{
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+}
+
+/* Contenu central : les deux textes sont superposés, un seul est visible */
+.visuel-centre{
+    display: grid;
+}
+
+.visuel-vue{
+    grid-area: 1 / 1;
+    align-self: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(14px);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease,
+        visibility 0s linear 0.5s;
+}
+
+.auth[data-vue="connexion"] .vv-connexion,
+.auth[data-vue="inscription"] .vv-inscription{
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+}
+
+/* Slogan en escalier : acheter → vendre → échanger */
+.visuel-titre{
+    font-family: var(--e-titres);
+    font-size: clamp(2.5rem, min(5vw, 9vh), 4.7rem);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    color: #fff;
+}
+
+.visuel-titre span{
+    display: block;
+}
+
+.visuel-titre span:nth-child(2){ padding-left: 0.9em; }
+.visuel-titre span:nth-child(3){ padding-left: 1.8em; }
+
+.visuel-titre i{
+    font-style: normal;
+    color: var(--e-orange);
+}
+
+.visuel-titre--court span:nth-child(2){ padding-left: 0.9em; }
+.visuel-titre--court span:nth-child(3){ padding-left: 0; }
+
+.visuel-texte{
+    max-width: 30em;
+    margin-top: 28px;
+    font-size: clamp(1rem, 1.2vw, 1.12rem);
+    line-height: 1.75;
+    color: rgba(255,255,255,0.84);
+}
+
+/* Catégories (mêmes catégories que le site) */
+.chips{
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.chips li{
+    padding: 9px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+/* Parcours d'inscription (vraie séquence : 3 étapes) */
+.parcours{
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    margin-top: 30px;
+    max-width: 30em;
+}
+
+.parcours li{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.parcours .n{
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    font-family: var(--e-titres);
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--e-degrade);
+    border-radius: 50%;
+}
+
+.parcours strong{
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.parcours span.t{
+    display: block;
+    margin-top: 2px;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.68);
+}
+
+.visuel-bas{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.66);
+}
+
+
+/* =========================================================
+   ZONE FORMULAIRE (DROITE) — GRANDE CARTE BLANCHE
+========================================================= */
+
+.auth-panneau{
+    position: relative;
+    z-index: 2;
+    display: flex;
+    padding: 28px 32px 28px 0;
+}
+
+.auth-carte{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 620px;
+    min-height: calc(100vh - 56px);
+    min-height: calc(100dvh - 56px);
+    margin: 0 auto;
+    background: #fff;
+    color: var(--e-texte);
+    border-radius: 28px;
+    box-shadow:
+        0 40px 90px -24px rgba(0,0,0,0.6),
+        0 2px 8px rgba(0,0,0,0.10);
+    overflow: hidden;
+}
+
+.auth-carte::before{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--e-degrade);
+}
+
+.vue-carte{
+    width: 100%;
+    padding: 52px 56px 44px;
+    animation: entree 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.auth[data-vue="connexion"] #inscription{ display: none; }
+.auth[data-vue="inscription"] #connexion{ display: none; }
+
+@keyframes entree{
+    from{ opacity: 0; transform: translateY(14px); }
+    to{ opacity: 1; transform: none; }
+}
+
+.carte-entete{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.carte-logo{
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border: 1px solid var(--e-bordure);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.carte-logo img{
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.carte-etiquette{
+    padding: 7px 13px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--e-brun);
+    background: #fff1e8;
+    border-radius: 999px;
+}
+
+.carte-titre{
+    font-family: var(--e-titres);
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--e-noir);
+}
+
+.carte-titre::after{
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin-top: 14px;
+    background: var(--e-degrade);
+    border-radius: 4px;
+}
+
+.carte-sous-titre{
+    margin-top: 14px;
+    max-width: 34em;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--e-gris);
+}
+
+
+/* =========================================================
+   CHAMPS
+========================================================= */
+
+#form_connexion{
+    display: flex;
+    flex-direction: column;
+}
+
+.grille-champs{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+}
+
+.grille-champs .plein{
+    grid-column: 1 / -1;
+}
+
+.champ-groupe{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    min-width: 0;
+}
+
+.champ-ligne{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.champ-label{
+    font-size: 14px;
+    font-weight: 700;
+    color: #3b2a21;
+}
+
+.lien-oublie{
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--e-rouge);
+    text-decoration: none;
+}
+
+.lien-oublie:hover,
+.lien-oublie:focus-visible{
+    text-decoration: underline;
+}
+
+.champ{
+    position: relative;
+}
+
+.champ .icone{
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    width: 20px;
+    height: 20px;
+    transform: translateY(-50%);
+    color: #a3958b;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.champ input{
+    width: 100%;
+    height: 54px;
+    padding: 0 16px 0 48px;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--e-texte);
+    background: var(--e-champ);
+    border: 1.5px solid var(--e-bordure);
+    border-radius: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.champ input::placeholder{
+    color: #b0a49b;
+}
+
+.champ input:hover{
+    border-color: #d8cbc2;
+}
+
+.champ input:focus{
+    outline: none;
+    background: #fff;
+    border-color: var(--e-orange);
+    box-shadow: 0 0 0 4px rgba(255,106,19,0.16);
+}
+
+.champ:focus-within .icone{
+    color: var(--e-orange);
+}
+
+.champ--mdp input{
+    padding-right: 54px;
+}
+
+.voir-mdp{
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    transform: translateY(-50%);
+    color: #9a8d84;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.voir-mdp:hover{
+    background: #f1eae5;
+    color: var(--e-brun);
+}
+
+.voir-mdp:focus-visible{
+    outline: 3px solid rgba(255,106,19,0.45);
+}
+
+.voir-mdp svg{
+    width: 20px;
+    height: 20px;
+}
+
+.voir-mdp .oeil-barre{ display: none; }
+.voir-mdp[aria-pressed="true"] .oeil{ display: none; }
+.voir-mdp[aria-pressed="true"] .oeil-barre{ display: block; }
+
+/* Icônes SVG de la page */
+.auth svg,
+.zone-vendeur svg{
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   MESSAGES (erreur / attente / succès) — mêmes id qu'avant
+========================================================= */
+
+.alerte{
+    margin-top: 18px;
+    padding: 13px 16px;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.55;
+    border-left: 4px solid;
+    border-radius: 12px;
+}
+
+.alerte-erreur{
+    color: #a8231c;
+    background: #fff0ee;
+    border-color: var(--e-rouge);
+}
+
+.alerte-attente{
+    color: #7a5300;
+    background: #fff7df;
+    border-color: #f2a516;
+}
+
+.alerte-succes{
+    color: #146c2e;
+    background: #e8f7ee;
+    border-color: var(--e-vert);
+}
+
+
+/* =========================================================
+   BOUTONS
+========================================================= */
+
+.auth-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    padding: 14px 22px;
+    font-family: var(--e-titres);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+}
+
+.auth-btn:focus-visible{
+    outline: 3px solid rgba(255,106,19,0.5);
+    outline-offset: 3px;
+}
+
+.auth-btn[disabled]{
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.auth-btn--primaire{
+    margin-top: 28px;
+    background: var(--e-degrade);
+    box-shadow: 0 14px 26px -10px rgba(228,35,31,0.65);
+}
+
+.auth-btn--primaire:hover:not([disabled]){
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #d31b17 0%, #ff7a1f 100%);
+    box-shadow: 0 18px 30px -10px rgba(228,35,31,0.75);
+}
+
+.auth-btn--contour{
+    min-height: 52px;
+    margin-top: 14px;
+    color: var(--e-brun);
+    background: #fff;
+    border: 1.5px solid #efcfbd;
+}
+
+.auth-btn--contour:hover{
+    background: #fff3eb;
+    border-color: var(--e-orange);
+}
+
+.auth-btn--ghost{
+    color: #4a382d;
+    background: #f4eeea;
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+.auth-btn--ghost:hover{
+    background: #ebe1da;
+}
+
+.auth-btn--wave{
+    margin-top: 6px;
+    background: linear-gradient(135deg, #1560dc 0%, #2f8bff 100%);
+    box-shadow: 0 14px 26px -12px rgba(21,96,220,0.7);
+}
+
+.auth-btn--wave:hover{
+    transform: translateY(-2px);
+}
+
+.auth-btn--wa{
+    background: linear-gradient(135deg, #17a34a 0%, #25d366 100%);
+    box-shadow: 0 14px 26px -12px rgba(23,163,74,0.7);
+}
+
+.auth-btn--wa:hover{
+    transform: translateY(-2px);
+}
+
+.ligne-boutons{
+    display: grid;
+    grid-template-columns: 1fr 1.7fr;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.ligne-boutons .auth-btn{
+    font-size: 13.5px;
+    letter-spacing: 0.05em;
+}
+
+.ligne-boutons .auth-btn--ghost{
+    font-size: 14.5px;
+}
+
+.note-form{
+    margin-top: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    text-align: center;
+    color: var(--e-gris);
+}
+
+.separateur-ou{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #a0938a;
+}
+
+.separateur-ou::before,
+.separateur-ou::after{
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--e-bordure);
+}
+
+.bascule{
+    margin-top: 18px;
+    text-align: center;
+}
+
+.bascule p{
+    font-size: 15px;
+    color: var(--e-gris);
+}
+
+
+/* =========================================================
+   INSCRIPTION — INDICATEUR D'ÉTAPES
+========================================================= */
+
+.etapes{
+    display: flex;
+    align-items: center;
+    margin: 26px 0 4px;
+}
+
+.etape{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #b3a79e;
+    white-space: nowrap;
+}
+
+.etape .num{
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    font-family: var(--e-titres);
+    font-size: 14px;
+    font-weight: 800;
+    color: #a99c92;
+    background: #efe9e4;
+    border-radius: 50%;
+    transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.etape.actif{ color: var(--e-brun); }
+
+.etape.actif .num{
+    color: #fff;
+    background: var(--e-degrade);
+    box-shadow: 0 6px 14px -4px rgba(228,35,31,0.55);
+}
+
+.etape.fait{ color: var(--e-vert); }
+
+.etape.fait .num{
+    font-size: 0;
+    color: #fff;
+    background: var(--e-vert);
+}
+
+.etape.fait .num::after{
+    content: "✓";
+    font-size: 15px;
+}
+
+.separateur-etape{
+    flex: 1;
+    min-width: 14px;
+    height: 3px;
+    margin: 0 12px;
+    background: #efe9e4;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.separateur-etape.fait{
+    background: var(--e-vert);
+}
+
+.bloc-etape{
+    display: none;
+}
+
+.bloc-etape.actif{
+    display: block;
+    animation: entree 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+
+/* =========================================================
+   INSCRIPTION — PAIEMENT & PREUVE
+========================================================= */
+
+.ticket{
+    display: flex;
+    align-items: stretch;
+    margin-top: 22px;
+    color: #fff;
+    background: linear-gradient(135deg, #1c1310 0%, #43200f 100%);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.ticket > div{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 22px;
+}
+
+.ticket .gauche{ flex: 1; }
+
+.ticket .droite{
+    text-align: right;
+    border-left: 2px dashed rgba(255,255,255,0.25);
+}
+
+.ticket small{
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.68);
+}
+
+.ticket strong{
+    font-family: var(--e-titres);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--e-or);
+}
+
+.ticket .droite strong{
+    font-size: 22px;
+    color: #fff;
+}
+
+.aide{
+    margin: 18px 0 20px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--e-gris);
+}
+
+#form_preuve{
+    position: relative;
+}
+
+.depot-input{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.depot{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 30px 20px;
+    text-align: center;
+    background: #fffaf6;
+    border: 2px dashed #e6cbb9;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.depot:hover,
+.depot-input:focus-visible + .depot{
+    background: #fff3ea;
+    border-color: var(--e-orange);
+}
+
+.depot svg{
+    width: 34px;
+    height: 34px;
+    color: var(--e-orange);
+}
+
+.depot-titre{
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--e-brun);
+}
+
+.depot-nom{
+    font-size: 13.5px;
+    color: var(--e-gris);
+    word-break: break-all;
+}
+
+.depot.rempli{
+    background: #f0faf4;
+    border-style: solid;
+    border-color: var(--e-vert);
+}
+
+.depot.rempli svg{
+    color: var(--e-vert);
+}
+
+
+/* =========================================================
+   TABLEAU DE BORD VENDEUR — BARRE BIENVENUE / DÉCONNEXION
+========================================================= */
+
+.barre-vendeur{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 12px;
+    width: 90%;
+    max-width: 1000px;
+    margin: 32px auto 0;
+}
+
+.barre-vendeur .alerte{
+    flex: 1 1 260px;
+    margin: 0;
+}
+
+.btn-deconnexion{
+    padding: 12px 22px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: #2a211d;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+}
+
+.btn-deconnexion:hover{
+    background: var(--e-rouge);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+/* Petits ordinateurs : formulaire d'inscription sur une colonne */
+@media (max-width: 1180px) and (min-width: 961px){
+
+    .auth-visuel{ padding: 36px 36px 32px 44px; }
+    .auth-panneau{ padding-right: 20px; }
+    .vue-carte{ padding: 46px 40px 40px; }
+    .grille-champs{ grid-template-columns: 1fr; }
+}
+
+/* Écrans peu hauts (ordinateur) : le panneau visuel défile avec la page */
+@media (max-height: 720px) and (min-width: 961px){
+
+    .auth-visuel{
+        position: relative;
+        height: auto;
+        min-height: 100vh;
+    }
+}
+
+/* Tablettes et téléphones : visuel réduit au-dessus, carte qui le chevauche */
+@media (max-width: 960px){
+
+    .auth-grille{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .auth-visuel{
+        position: relative;
+        height: auto;
+        padding: 26px 30px 74px;
+        gap: 22px;
+    }
+
+    .liens-haut a:not(:first-child),
+    .visuel-bas,
+    .chips,
+    .parcours,
+    .deco-panier{
+        display: none;
+    }
+
+    .marque-logo{ width: 46px; height: 46px; border-radius: 14px; }
+    .marque-logo img{ width: 38px; height: 38px; }
+    .marque-texte strong{ font-size: 19px; }
+
+    .visuel-titre{ font-size: clamp(2rem, 7vw, 2.9rem); }
+    .visuel-texte{ margin-top: 16px; font-size: 15.5px; }
+
+    .deco-anneau{
+        top: -130px;
+        right: -110px;
+        width: 300px;
+        height: 300px;
+    }
+
+    .auth-panneau{
+        flex: 1;
+        margin-top: -46px;
+        padding: 0 20px 32px;
+    }
+
+    .auth-carte{
+        min-height: 0;
+        max-width: 640px;
+    }
+
+    .vue-carte{ padding: 42px 36px 36px; }
+}
+
+@media (max-width: 600px){
+
+    .auth-visuel{ padding: 22px 22px 66px; }
+    .visuel-texte{ display: none; }
+
+    .auth-panneau{
+        margin-top: -38px;
+        padding: 0;
+    }
+
+    .auth-carte{
+        max-width: none;
+        border-radius: 28px 28px 0 0;
+        box-shadow: 0 -12px 40px rgba(0,0,0,0.3);
+    }
+
+    .vue-carte{ padding: 34px 22px 36px; }
+
+    .carte-titre{ font-size: 27px; }
+    .carte-sous-titre{ font-size: 15px; }
+
+    .grille-champs{ grid-template-columns: 1fr; }
+
+    .champ input{ height: 52px; }
+
+    .etape:not(.actif) span{ display: none; }
+    .separateur-etape{ margin: 0 10px; }
+
+    .ticket strong{ font-size: 24px; }
+    .ticket > div{ padding: 16px 18px; }
+}
+
+@media (max-width: 420px){
+
+    .ligne-boutons{ grid-template-columns: 1fr; }
+    .ligne-boutons .auth-btn--ghost{ order: 2; }
+}
+
+@media (prefers-reduced-motion: reduce){
+
+    .vue-carte,
+    .bloc-etape.actif{
+        animation: none;
+    }
+
+    .visuel-vue{
+        transition: none;
+        transform: none;
+    }
+}
